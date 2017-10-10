@@ -6,11 +6,15 @@
  */
 
 #include <Wire.h>
+//#include "Arduino.h"
 
 //The following code is for setting up IMU constants
 
 
-
+#define mode 0
+//#define mode 1
+//Mode 1 - Line following + IMU control
+//Mode 0 - IMU control + Manual Driving
 
 
 
@@ -72,7 +76,7 @@ float c_magnetom_y;
 float c_magnetom_z;
 float MAG_Heading;
 
-float Accel_Vector[3]= {0,0,0}; //Store the acceleration in a vector
+float Accel_Vector[3 ]= {0,0,0}; //Store the acceleration in a vector
 float Gyro_Vector[3]= {0,0,0};//Store the gyros turn rate in a vector
 float Omega_Vector[3]= {0,0,0}; //Corrected Gyro_Vector data
 float Omega_P[3]= {0,0,0};//Omega Proportional correction
@@ -147,23 +151,39 @@ struct gain {
   float kd;
   float kp;
   float ki;
+  float maxControl;
+  float minControl;
+  float error;
+  float previousError;
+  float derivativeError;
+  float integralError;
 };
 
-const int minControl = -255;
-const int maxControl = 255;
-float prop = 0; //WHen car left, right sensors off, take right control positive
-float integral = 0;
-float derivative = 0;
-float prevprop = 0;
-//********************************************************
+//****************************************************************
 
 
 
+//This is the init variables for LSA08
 
 
 
-struct gain IMUgain;
-struct gain* pIMUgain = &IMUgain;
+//******************************************************************
+
+const byte rx = 14;    // Defining pin 0 as Rx
+const byte tx = 15;    // Defining pin 1 as Tx
+const byte serialEn1 = 35;
+const byte serialEn2 = 41;
+const byte serialEn3 = 43;
+const float LSAlength = 11.1;
+const float LSAdistance = 46.18;
+char add=0x01;
+//enum LSA08{LSA08a,LSA08b,LSA08c};
+//*******************************************************************
+
+
+
+struct gain IMUgain, Linegain;
+struct gain *pIMUgain = &IMUgain, *pLinegain = &Linegain;
 const float r = 1;
 const float pi = 3.14;
 int flag = 0;
@@ -172,41 +192,52 @@ wheel wheela = {0, 0, anglea, rpmmax, pinpwma, pinaa, pinab,0}, wheelb = {0, 0, 
 wheel *pwheela = &wheela, *pwheelb = &wheelb, *pwheelc = &wheelc;
 wheels *wheelp[3]={pwheela,pwheelb,pwheelc};
 float aspeed=0,bspeed=0,cspeed=0;
-
-
+//enum LSA08 LSA;
+float Linecontrol, IMUcontrol;
 void setup() {
   Serial.begin(9600);
+  Serial3.begin(9600);
   IMUinit();                //Initialise IMU
   SetOffset();              //Take initial readings for offset
   initDriving();
-  PIDinit(14, 0, 0, pIMUgain);
-  timer=millis();           //saev ccurrent time in timer ffor gyro integration
+  initLSA(9600);            //const int minControl = -255;      const int maxControl = 255;
+  PIDinit(14, 1.5, 0,-255,255, pIMUgain);
+  PIDinit(5,0,0,-45,45,pLinegain);
+  timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
 }
-
+///////////////////Set limit if >90
 void loop() {
-      CorrectDrift();      //Corrects drift via gyro integration
-      float a = PID(30, ToDeg(yaw), pIMUgain);
-      Serial.print("control:"+String(a)+"heading:"+String(ToDeg(yaw)));
-      
+      CorrectDrift();
+      float LineTheta = ToDeg(GetThetaofLSA(serialEn1));
+      Serial.println(ToDeg(yaw));
+      Serial.println(LineTheta);
+      delay(100);
+      //IMUcontrol = PID(-123.7, ToDeg(yaw), pIMUgain); //Corrects drift via gyro integration
+      if(abs(ToDeg(GetThetaofLSA(serialEn1))) < 6.8){
+      Linecontrol = PID(0,LineTheta,pLinegain);
+      }
+      else{
+        Linecontrol = (float)(pLinegain->previousError)*45/abs(pLinegain->previousError);
+      }
+      Serial.print("Linecontrol: "+String(Linecontrol)+"HeadingControl: "+String(IMUcontrol));
+ 
       if(Serial.available()>0){
         String data = Serial.readString();
         if (data == "s")
         flag^=1;
-        else
-        theta = atoi(data.c_str()); 
       }
    if(flag==1){
         Serial.println("Started");
-        
-        //calcRPM(a,0,0,wheelp);
-        calcRPM(a,theta,rpmmax,wheelp);
-        Serial.print(String(wheelp[0]->rpm)+String(wheelp[1]->rpm)+String(wheelp[2]->rpm));
+          
+        calcRPM(0,270+Linecontrol,rpmmax,wheelp);
+        //calcRPM(0,Linecontrol,rpmmax,wheelp);
         startMotion(wheelp);
-   }
+        }
+        
+   
   else if(flag==0){
-    //Serial.println(ToDeg(yaw));
     Serial.println("Stopped");
     brakeWheels(wheelp);
   }
