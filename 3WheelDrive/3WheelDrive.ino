@@ -136,7 +136,7 @@ const int pinba = 31;
 const int pinbb = 33;
 const int pinca = 23;
 const int pincb = 25;
-
+const float HeadTheta=54.2;
 //*****************************************************************
 
 
@@ -151,6 +151,7 @@ struct gain {
   float kd;
   float kp;
   float ki;
+  float required;
   float maxControl;
   float minControl;
   float error;
@@ -177,6 +178,7 @@ const byte serialEn3 = 43;
 const float LSAlength = 11.1;
 const float LSAdistance = 46.18;
 char add=0x01;
+
 //enum LSA08{LSA08a,LSA08b,LSA08c};
 //*******************************************************************
 
@@ -192,8 +194,10 @@ wheel wheela = {0, 0, anglea, rpmmax, pinpwma, pinaa, pinab,0}, wheelb = {0, 0, 
 wheel *pwheela = &wheela, *pwheelb = &wheelb, *pwheelc = &wheelc;
 wheels *wheelp[3]={pwheela,pwheelb,pwheelc};
 float aspeed=0,bspeed=0,cspeed=0;
+
 //enum LSA08 LSA;
 float Linecontrol, IMUcontrol;
+
 void setup() {
   Serial.begin(9600);
   Serial3.begin(9600);
@@ -201,44 +205,35 @@ void setup() {
   SetOffset();              //Take initial readings for offset
   initDriving();
   initLSA(9600);            //const int minControl = -255;      const int maxControl = 255;
-  PIDinit(14, 1.5, 0,-255,255, pIMUgain);
-  PIDinit(5,0,0,-45,45,pLinegain);
+  PIDinit(17,0,0,0,-255,255, pIMUgain);
+  PIDinit(5,0,0,0,-45,45,pLinegain);
   timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
 }
 ///////////////////Set limit if >90
 void loop() {
-      CorrectDrift();
-      float LineTheta = ToDeg(GetThetaofLSA(serialEn1));
-      Serial.println(ToDeg(yaw));
-      Serial.println(LineTheta);
-      delay(100);
-      //IMUcontrol = PID(-123.7, ToDeg(yaw), pIMUgain); //Corrects drift via gyro integration
-      if(abs(ToDeg(GetThetaofLSA(serialEn1))) < 6.8){
-      Linecontrol = PID(0,LineTheta,pLinegain);
-      }
-      else{
-        Linecontrol = (float)(pLinegain->previousError)*45/abs(pLinegain->previousError);
-      }
-      Serial.print("Linecontrol: "+String(Linecontrol)+"HeadingControl: "+String(IMUcontrol));
- 
+  
+      float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
+      //float Linecontrol=LineControl(serialEn1,45,6.8,pLinegain);
+      //calcRPM(IMUcontrol,270+Linecontrol,rpmmax,wheelp);
+      calcRPM(IMUcontrol,theta,rpmmax,wheelp);
+      Serial.print(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw)));
       if(Serial.available()>0){
         String data = Serial.readString();
         if (data == "s")
         flag^=1;
-      }
+        else if(data== "c")
+        CalibrateIMU(pIMUgain);
+        else
+        theta=atoi(data.c_str());
+        }
    if(flag==1){
-        Serial.println("Started");
-          
-        calcRPM(0,270+Linecontrol,rpmmax,wheelp);
-        //calcRPM(0,Linecontrol,rpmmax,wheelp);
+        Serial.println(" Started ");
         startMotion(wheelp);
         }
-        
-   
-  else if(flag==0){
-    Serial.println("Stopped");
-    brakeWheels(wheelp);
-  }
+   else if(flag==0){
+        Serial.println(" Stopped ");
+        brakeWheels(wheelp);
+        }
 }

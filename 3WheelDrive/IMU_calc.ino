@@ -10,7 +10,7 @@ void IMUinit(){
   
 }
 
-void CorrectDrift(){
+void GetIMUReading(){
   if((millis()-timer)>=20)  // Main loop runs at 50Hz
   {
     counter++;
@@ -63,5 +63,17 @@ void SetOffset(){
 
   AN_OFFSET[5]-=GRAVITY*SENSOR_SIGN[5];
   delay(2000);
+}
+void CalibrateIMU(gain* IMU){
+  float avg=0;
+    for(int i=0;i<50;i++)
+      {
+        Serial.println("Calibrating IMU Sensor");
+        GetIMUReading(); 
+        avg+=ToDeg(yaw);
+      }
+      avg=avg/50;
+      IMU->required=avg;
+      IMU->integralError=0;  
 }
 
