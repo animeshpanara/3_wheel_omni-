@@ -1,8 +1,9 @@
 /*
  * TO DO:
  * Check if IMU giving readings- Timer interrupt to calc loop counter value, if same then rese
- * Limit ang_velocity
+ * Limit ang_velocity?
  * 6-A,7-B,8-C
+ * enum LSA
  */
 
 #include <Wire.h>
@@ -180,8 +181,6 @@ typedef struct LSA08{
   int OutputEnable;
 } LSA08;
 
-LSA08 LSA08a={0x01,270,3,0,35}, LSA08b={0x02,0,2,0,37}, LSA08c={0x03,180,18,0,39};
-LSA08 * pLSA08[]={&LSA08a,&LSA08b,&LSA08c};
 const byte rx = 14;    // Defining pin 0 as Rx
 const byte tx = 15;    // Defining pin 1 as Tx
 //const byte OutputEnable[3] = {35,37,39};
@@ -191,8 +190,6 @@ const float LSAdistance = 46.18;
 //int JunctionCount[3]={0};
 //char add[3]={0x01,0x02,0x03};
 //int Theta[3]={270,0,180};
-int Test[3]={6,1,0};
-int ActiveSensor=0;
 //enum LSA08{LSA08a,LSA08b,LSA08c};
 //*******************************************************************
 
@@ -202,16 +199,15 @@ struct gain IMUgain, Linegain[3];
 struct gain *pIMUgain = &IMUgain, *pLinegain[3] = {&Linegain[0],&Linegain[1],&Linegain[2]};
 int flag = 0;
 int theta;
-
 wheel wheela = {0, 0, anglea, rpmmax, pinpwma, pinaa, pinab,0}, wheelb = {0, 0, angleb, rpmmax, pinpwmb, pinba, pinbb,0}, wheelc = {0, 0, anglec, rpmmax, pinpwmc, pinca, pincb,0};
-wheel *pwheela = &wheela, *pwheelb = &wheelb, *pwheelc = &wheelc;
-wheels *wheelp[3]={pwheela,pwheelb,pwheelc};
-float aspeed=0,bspeed=0,cspeed=0;
-
-//enum LSA08 LSA;
-
+wheels *pwheel[]={&wheela,&wheelb,&wheelc};
+LSA08 LSA08a={0x01,270,3,0,35}, LSA08b={0x02,0,2,0,37}, LSA08c={0x03,180,18,0,39};
+LSA08 * pLSA08[]={&LSA08a,&LSA08b,&LSA08c};
+int Test[3]={6,1,0};
+enum LSA{LSAa,LSAb,LSAc};
+enum LSA ActiveLSA = LSAa;
 float Linecontrol, IMUcontrol;
-
+int ActiveSensor=0;
 void setup() {
   Serial.begin(9600);
   //Serial2.begin(115200);
@@ -234,7 +230,7 @@ void setup() {
 void loop() {
       if(pLSA08[ActiveSensor]->JunctionCount>Test[ActiveSensor]){
         Serial.println("hello");
-        brakeWheels(wheelp);
+        brakeWheels(pwheel);
         ActiveSensor^=1;
       }
 
@@ -248,8 +244,8 @@ void loop() {
         }
         pLSA08[j]->JunctionCount=getJunction(pLSA08[j]->address);
       }
-      calcRPM(IMUcontrol,pLSA08[ActiveSensor]->theta+Linecontrol,trans_velMax,wheelp);
-      //calcRPM(Linecontrol,90,rpmmax,wheelp);
+      calcRPM(IMUcontrol,pLSA08[ActiveSensor]->theta+Linecontrol,trans_velMax,pwheel);
+      //calcRPM(Linecontrol,90,rpmmax,pwheel);
       Serial.println(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Junction1: "+String(pLSA08[ActiveSensor]->JunctionCount));
       if(mode==1){
       Serial2.flush();
@@ -272,11 +268,11 @@ void loop() {
           CalibrateIMU(pIMUgain);
           break;
           }
-          calcRPM(IMUcontrol,theta,trans_velMax,wheelp);
-          startMotion(wheelp);
+          calcRPM(IMUcontrol,theta,trans_velMax,pwheel);
+          startMotion(pwheel);
        }
        else
-          brakeWheels(wheelp);
+          brakeWheels(pwheel);
       }
       else if(mode==2){
        if(Serial.available()>0){
@@ -291,11 +287,11 @@ void loop() {
         }
       if(flag==1){
         Serial.println(" Started ");
-        startMotion(wheelp);
+        startMotion(pwheel);
         }
       else if(flag==0){
         Serial.println(" Stopped ");
-        brakeWheels(wheelp);
+        brakeWheels(pwheel);
         }
       }
      }
