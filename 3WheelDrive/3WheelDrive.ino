@@ -11,8 +11,8 @@
 //The following code is for setting up IMU constants
 
 
-
-
+#define Manual
+//#define LineFollowing
 
 
 //**********************************************************************
@@ -148,14 +148,14 @@ struct gain {
   float kd;
   float kp;
   float ki;
+  float maxControl;
+  float minControl;
+  float error;
+  float previousError;
+  float derivativeError;
+  float integralError;
 };
 
-const int minControl = -255;
-const int maxControl = 255;
-float prop = 0; //WHen car left, right sensors off, take right control positive
-float integral = 0;
-float derivative = 0;
-float prevprop = 0;
 //****************************************************************
 
 
@@ -166,19 +166,21 @@ float prevprop = 0;
 
 //******************************************************************
 
-const byte rx = 0;    // Defining pin 0 as Rx
-const byte tx = 1;    // Defining pin 1 as Tx
-const byte serialEn1 = 2;
-const byte serialEn2 = 3;
-const byte serialEn3 = 4;
+const byte rx = 14;    // Defining pin 0 as Rx
+const byte tx = 15;    // Defining pin 1 as Tx
+const byte serialEn1 = 35;
+const byte serialEn2 = 41;
+const byte serialEn3 = 43;
+const float LSAlength = 11.1;
+const float LSAdistance = 46.18;
 char add=0x01;
-
+//enum LSA08{LSA08a,LSA08b,LSA08c};
 //*******************************************************************
 
 
 
-struct gain IMUgain;
-struct gain* pIMUgain = &IMUgain;
+struct gain IMUgain, Linegain;
+struct gain *pIMUgain = &IMUgain, *pLinegain = &Linegain;
 const float r = 1;
 const float pi = 3.14;
 int flag = 0;
@@ -187,41 +189,63 @@ wheel wheela = {0, 0, anglea, rpmmax, pinpwma, pinaa, pinab,0}, wheelb = {0, 0, 
 wheel *pwheela = &wheela, *pwheelb = &wheelb, *pwheelc = &wheelc;
 wheels *wheelp[3]={pwheela,pwheelb,pwheelc};
 float aspeed=0,bspeed=0,cspeed=0;
-
-
+//enum LSA08 LSA;
+float Linecontrol, IMUcontrol;
 void setup() {
   Serial.begin(9600);
   IMUinit();                //Initialise IMU
   SetOffset();              //Take initial readings for offset
   initDriving();
-  PIDinit(14, 1.5, 0, pIMUgain);
-  timer=millis();           //saev ccurrent time in timer ffor gyro integration
+  PIDinit(16, 0, 0,-255,255, pIMUgain);
+  #ifdef LineFollowing
+  Serial3.begin(9600);
+  initLSA(9600);            //const int minControl = -255;      const int maxControl = 255;
+  int pidnum;
+  while(!Serial.available()>0);
+  if(Serial.available()>0){
+    pidnum = atoi(Serial.readString().c_str());
+  }
+  PIDinit(pidnum,0,0,-45,45,pLinegain);
+  #endif
+  timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
 }
-
+///////////////////Set limit if >90
 void loop() {
-      CorrectDrift();      //Corrects drift via gyro integration
-      float a = PID(111.4, ToDeg(yaw), pIMUgain);
-      Serial.print("control:"+String(a)+"heading:"+String(ToDeg(yaw)));
+      CorrectDrift();
+      IMUcontrol = PID(57, ToDeg(yaw), pIMUgain); //Corrects drift via gyro integration
+      Serial.println(ToDeg(yaw));
+      #ifdef LineFollowing
+      float LineTheta = ToDeg(GetThetaofLSA(serialEn1));
+      Serial.println(LineTheta);
+      if(abs(ToDeg(GetThetaofLSA(serialEn1))) < 6.8){
+      Linecontrol =270 + PID(0,LineTheta,pLinegain);
+      }
+      else{
+        Linecontrol = (float)(pLinegain->previousError)*30/abs(pLinegain->previousError)+270;
+      }
+      Serial.print("Linecontrol: "+String(Linecontrol)+"HeadingControl: "+String(IMUcontrol));
+      #endif
       
       if(Serial.available()>0){
         String data = Serial.readString();
         if (data == "s")
         flag^=1;
-        else
-        theta = atoi(data.c_str()); 
+        #ifdef Manual
+        else{
+          Linecontrol = atoi(data.c_str());
+        }
+        #endif
       }
    if(flag==1){
         Serial.println("Started");
-        
-        //calcRPM(a,0,0,wheelp);
-        calcRPM(a,theta,rpmmax22,wheelp);
-        Serial.print(String(wheelp[0]->rpm)+String(wheelp[1]->rpm)+String(wheelp[2]->rpm));
+        calcRPM(IMUcontrol,Linecontrol,rpmmax,wheelp);
         startMotion(wheelp);
-   }
+        }
+        
+   
   else if(flag==0){
-    //Serial.println(ToDeg(yaw));
     Serial.println("Stopped");
     brakeWheels(wheelp);
   }

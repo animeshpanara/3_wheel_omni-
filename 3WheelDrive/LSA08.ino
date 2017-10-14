@@ -1,27 +1,30 @@
-void initLSA(){
+#define serialLSA Serial3
+
+void initLSA(int baud){
   pinMode(serialEn1,OUTPUT);
-  pinMode(serialEn2,OUTPUT);
-  pinMode(serialEn3,OUTPUT);
+  //pinMode(serialEn2,OUTPUT);
+  //pinMode(serialEn3,OUTPUT);
   digitalWrite(serialEn1,HIGH);
-  digitalWrite(serialEn2,HIGH);
-  digitalWrite(serialEn3,HIGH);
-  sendCommand('X',0x00,add);
-  sendCommand('L',0x01,add);
-  sendCommand('A',0x01,add);
-  sendCommand('B',0x05,add);
-  sendCommand('S',90,add);
-  sendCommand('R',0x00,add);
-  sendCommand('D',0x02,add);
-  clearJunction();
+//  digitalWrite(serialEn2,HIGH);
+//  digitalWrite(serialEn3,HIGH);
+//  sendCommand('X',0x00,add);
+//  sendCommand('L',0x01,add);
+//  sendCommand('A',0x01,add);
+//  sendCommand('B',0x05,add);
+//  sendCommand('S',90,add);
+//  sendCommand('R',0x00,add);
+//  sendCommand('D',0x02,add);
+//  ChangeBaud(baud,add);
+//  clearJunction();
 }
 
 
 void sendCommand(char command, char data, char address) {
   char checksum = address + command + data;  
-  Serial.write(address);
-  Serial.write(command);
-  Serial.write(data);
-  Serial.write(checksum);
+  Serial3.write(address);
+  Serial3.write(command);
+  Serial3.write(data);
+  Serial3.write(checksum);
 }
 
 void ChangeBaud(char baud, char add)
@@ -45,5 +48,30 @@ void clearJunction()
   sendCommand(command,data,address);
 }
 
+int getJunction(){
+  char address = 0x01;
+  char command = 'X';
+  char data = 0x01;
+ sendCommand(command,data,address);
 
+  while(Serial3.available() <= 0);
+  return (int(Serial3.read()));
+}
+//change serial by serial2
+byte GetByteOfLSA(byte SerialEnx){                                            //Initially each and every serialLSAEnX(X=1,2,3) should be HIGH
+  byte a=0;
+  digitalWrite(SerialEnx,LOW);
+  while(Serial3.available()<=0);
+  a=Serial3.read();
+  digitalWrite(SerialEnx,HIGH);
+  return a;   
+ }
 
+float GetThetaofLSA(byte serialEn){
+   int LineReading = GetByteOfLSA(serialEn); 
+   LineReading=35-LineReading;
+ //  Serial.println(LineReading); 
+   float scaledReading = (float)LSAlength*LineReading/70;
+   float theta = atan(scaledReading/LSAdistance);
+   return theta;
+}
