@@ -1,10 +1,10 @@
-#define serialLSA Serial3
+#define SerialLSA Serial3
 
-void initLSA(int baud){
-  pinMode(serialEn1,OUTPUT);
+void initLSA(int baud,int OutputEnable){
+  pinMode(OutputEnable,OUTPUT);
   //pinMode(serialEn2,OUTPUT);
   //pinMode(serialEn3,OUTPUT);
-  digitalWrite(serialEn1,HIGH);
+  digitalWrite(OutputEnable,HIGH);
 //  digitalWrite(serialEn2,HIGH);
 //  digitalWrite(serialEn3,HIGH);
 //  sendCommand('X',0x00,add);
@@ -21,10 +21,10 @@ void initLSA(int baud){
 
 void sendCommand(char command, char data, char address) {
   char checksum = address + command + data;  
-  Serial3.write(address);
-  Serial3.write(command);
-  Serial3.write(data);
-  Serial3.write(checksum);
+  SerialLSA.write(address);
+  SerialLSA.write(command);
+  SerialLSA.write(data);
+  SerialLSA.write(checksum);
 }
 
 void ChangeBaud(char baud, char add)
@@ -54,21 +54,21 @@ int getJunction(){
   char data = 0x01;
  sendCommand(command,data,address);
 
-  while(Serial3.available() <= 0);
-  return (int(Serial3.read()));
+  while(SerialLSA.available() <= 0);
+  return (int(SerialLSA.read()));
 }
 //change serial by serial2
-byte GetByteOfLSA(byte SerialEnx){                                            //Initially each and every serialLSAEnX(X=1,2,3) should be HIGH
+byte GetByteOfLSA(byte OutputEnable){                                            //Initially each and every serialLSAEnX(X=1,2,3) should be HIGH
   byte a=0;
-  digitalWrite(SerialEnx,LOW);
-  while(Serial3.available()<=0);
-  a=Serial3.read();
-  digitalWrite(SerialEnx,HIGH);
+  digitalWrite(OutputEnable,LOW);
+  while(SerialLSA.available()<=0);
+  a=SerialLSA.read();
+  digitalWrite(OutputEnable,HIGH);
   return a;   
  }
 
-float GetThetaofLSA(byte serialEn){
-   int LineReading = GetByteOfLSA(serialEn); 
+float GetThetaofLSA(byte OutputEnable){
+   int LineReading = GetByteOfLSA(OutputEnable); 
    LineReading=35-LineReading;
  //  Serial.println(LineReading); 
    float scaledReading = (float)LSAlength*LineReading/70;

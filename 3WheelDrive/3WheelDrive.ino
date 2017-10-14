@@ -172,9 +172,9 @@ struct gain {
 
 const byte rx = 14;    // Defining pin 0 as Rx
 const byte tx = 15;    // Defining pin 1 as Tx
-const byte serialEn1 = 35;
-const byte serialEn2 = 41;
-const byte serialEn3 = 43;
+const byte OutputEnable1 = 35;
+const byte OutputEnable2 = 37;
+const byte OutputEnable3 = 39;
 const float LSAlength = 11.1;
 const float LSAdistance = 46.18;
 char add=0x01;
@@ -200,11 +200,12 @@ float Linecontrol, IMUcontrol;
 
 void setup() {
   Serial.begin(9600);
-  Serial3.begin(9600);
+  Serial2.begin(115200);
+  //Serial3.begin(9600);
   IMUinit();                //Initialise IMU
   SetOffset();              //Take initial readings for offset
   initDriving();
-  initLSA(9600);            //const int minControl = -255;      const int maxControl = 255;
+  //initLSA(9600,OutputEnable3);            //const int minControl = -255;      const int maxControl = 255;
   PIDinit(17,0,0,0,-255,255, pIMUgain);
   PIDinit(5,0,0,0,-45,45,pLinegain);
   timer=millis();           //save ccurrent time in timer ffor gyro integration
@@ -215,12 +216,15 @@ void setup() {
 void loop() {
   
       float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
-      //float Linecontrol=LineControl(serialEn1,45,6.8,pLinegain);
+      //float Linecontrol=LineControl(OutputEnable3,45,6.8,pLinegain);
       //calcRPM(IMUcontrol,270+Linecontrol,rpmmax,wheelp);
       calcRPM(IMUcontrol,theta,rpmmax,wheelp);
-      Serial.print(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw)));
-      if(Serial.available()>0){
-        String data = Serial.readString();
+      //Serial2.write(x);
+      Serial.print(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Theta: "+String(theta));
+      
+      if(Serial2.available()>0){
+        String data = Serial2.readString();
+        //Serial.print(data);
         if (data == "s")
         flag^=1;
         else if(data== "c")
