@@ -106,8 +106,6 @@ float G_Dt=0.02;    // Integratio n time (DCM algorithm)  We will run the integr
 
 //The following code is to set up driving constants/structs
 
-
-
 //******************************************************
 typedef struct wheels {
   float trans_rpm; //RPM for translational Velocity
@@ -169,72 +167,127 @@ struct gain {
 
 const byte rx = 14;    // Defining pin 0 as Rx
 const byte tx = 15;    // Defining pin 1 as Tx
-const byte OutputEnable1 = 35;
-const byte OutputEnable2 = 37;
-const byte OutputEnable3 = 39;
+const byte OutputEnable[3] = {35,37,39};
 const float LSAlength = 11.1;
 const float LSAdistance = 46.18;
-char add=0x01;
-
+const int JucntionPulse[3]={3,2,18};
+int JucntionCount[3]={0};
+char add[3]={0x01,0x02,0x03};
+int Theta[3]={270,0,180};
+int Test[3]={6,1,0};
+int ActiveSensor=0;
 //enum LSA08{LSA08a,LSA08b,LSA08c};
 //*******************************************************************
 
 
 
-struct gain IMUgain, Linegain;
-struct gain *pIMUgain = &IMUgain, *pLinegain = &Linegain;
+struct gain IMUgain, Linegain[3];
+struct gain *pIMUgain = &IMUgain, *pLinegain[3] = {&Linegain[0],&Linegain[1],&Linegain[2]};
 const float r = 1;
 const float pi = 3.14;
 int flag = 0;
 int theta;
+
 wheel wheela = {0, 0, anglea, rpmmax, pinpwma, pinaa, pinab,0}, wheelb = {0, 0, angleb, rpmmax, pinpwmb, pinba, pinbb,0}, wheelc = {0, 0, anglec, rpmmax, pinpwmc, pinca, pincb,0};
 wheel *pwheela = &wheela, *pwheelb = &wheelb, *pwheelc = &wheelc;
 wheels *wheelp[3]={pwheela,pwheelb,pwheelc};
 float aspeed=0,bspeed=0,cspeed=0;
 
 //enum LSA08 LSA;
+
 float Linecontrol, IMUcontrol;
 
 void setup() {
   Serial.begin(9600);
-  Serial2.begin(115200);
-  //Serial3.begin(9600);
+  //Serial2.begin(115200);
+  Serial3.begin(9600);
+  pinMode(JucntionPulse[0],INPUT);
+  pinMode(JucntionPulse[1],INPUT);
+  pinMode(JucntionPulse[2],INPUT);
   IMUinit();                //Initialise IMU
   SetOffset();              //Take initial readings for offset
   initDriving();
-  //initLSA(9600,OutputEnable3);            //const int minControl = -255;      const int maxControl = 255;
-  PIDinit(17,0,0,0,-255,255, pIMUgain);
-  PIDinit(5,0,0,0,-45,45,pLinegain);
+  initLSA(9600,OutputEnable[0]);            //const int minControl = -255;      const int maxControl = 255;
+  initLSA(9600,OutputEnable[1]);
+  //PIDinit(15,0,0,0,-255,255, pIMUgain);
+  PIDinit(13,2,0,0,-255,255, pIMUgain);
+  PIDinit(.5,0,0,0,-255,255,pLinegain[0]);
+  PIDinit(.5,0,0,0,-255,255,pLinegain[1]);
+  clearJunction(add[0]);
+  clearJunction(add[1]);
   timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
+  
 }
 ///////////////////Set limit if >90
+
 void loop() {
-  
+      if(JucntionCount[ActiveSensor]>Test[ActiveSensor]){
+        Serial.println("hello");
+        brakeWheels(wheelp);
+        ActiveSensor^=1;
+        
+      }
+      else{
       float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
-      //float Linecontrol=LineControl(OutputEnable3,45,6.8,pLinegain);
-      //calcRPM(IMUcontrol,270+Linecontrol,rpmmax,wheelp);
-      calcRPM(IMUcontrol,theta,rpmmax,wheelp);
-      //Serial2.write(x);
-      Serial.print(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Theta: "+String(theta));
-      
-      if(Serial2.available()>0){
-        String data = Serial2.readString();
-        //Serial.print(data);
-        if (data == "s")
-        flag^=1;
-        else if(data== "c")
-        CalibrateIMU(pIMUgain);
-        else
-        theta=atoi(data.c_str());
+      float Linecontrol=LineControl(OutputEnable[ActiveSensor],17,35,pLinegain[ActiveSensor]);
+      for(int j=0;j<2;j++)
+      if(digitalRead(JucntionPulse[j])){
+        while(digitalRead(JucntionPulse[j])){
+        Serial.print("hello");
         }
-   if(flag==1){
+        JucntionCount[j]=getJunction(add[j]);
+      }
+      calcRPM(IMUcontrol,Theta[ActiveSensor]+Linecontrol,rpmmax,wheelp);
+      //calcRPM(Linecontrol,90,rpmmax,wheelp);
+      Serial.println(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Junction1: "+String(JucntionCount[ActiveSensor]));
+      if(mode==1){
+      Serial2.flush();
+       if(Serial2.available()>0){
+       char data = Serial2.read();
+       switch(data){
+        case 'w':
+          theta=270;
+          break;
+        case 'a':
+          theta=180;
+          break;
+        case 's':
+          theta=90;
+          break;
+        case 'd':
+          theta=0;
+          break;
+        case 'c':
+          CalibrateIMU(pIMUgain);
+          break;
+          }
+          calcRPM(IMUcontrol,theta,rpmmax,wheelp);
+          startMotion(wheelp);
+       }
+       else
+          brakeWheels(wheelp);
+      }
+      else if(mode==2){
+       if(Serial.available()>0){
+        String data = Serial.readString();
+        Serial.print(data);
+        if (data == "s")
+          flag^=1;
+        else if(data== "c")
+            CalibrateIMU(pIMUgain);
+        else
+            theta=atoi(data.c_str());
+        }
+      if(flag==1){
         Serial.println(" Started ");
         startMotion(wheelp);
         }
-   else if(flag==0){
+      else if(flag==0){
         Serial.println(" Stopped ");
         brakeWheels(wheelp);
         }
+      }
+     }
 }
