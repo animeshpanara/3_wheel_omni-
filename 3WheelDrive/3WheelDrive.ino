@@ -6,6 +6,7 @@
  */
 
 #include <Wire.h>
+//#include "Arduino.h"
 
 //The following code is for setting up IMU constants
 
@@ -72,7 +73,7 @@ float c_magnetom_y;
 float c_magnetom_z;
 float MAG_Heading;
 
-float Accel_Vector[3]= {0,0,0}; //Store the acceleration in a vector
+float Accel_Vector[3 ]= {0,0,0}; //Store the acceleration in a vector
 float Gyro_Vector[3]= {0,0,0};//Store the gyros turn rate in a vector
 float Omega_Vector[3]= {0,0,0}; //Corrected Gyro_Vector data
 float Omega_P[3]= {0,0,0};//Omega Proportional correction
@@ -155,10 +156,24 @@ float prop = 0; //WHen car left, right sensors off, take right control positive
 float integral = 0;
 float derivative = 0;
 float prevprop = 0;
-//********************************************************
+//****************************************************************
 
 
 
+//This is the init variables for LSA08
+
+
+
+//******************************************************************
+
+const byte rx = 0;    // Defining pin 0 as Rx
+const byte tx = 1;    // Defining pin 1 as Tx
+const byte serialEn1 = 2;
+const byte serialEn2 = 3;
+const byte serialEn3 = 4;
+char add=0x01;
+
+//*******************************************************************
 
 
 
@@ -179,7 +194,7 @@ void setup() {
   IMUinit();                //Initialise IMU
   SetOffset();              //Take initial readings for offset
   initDriving();
-  PIDinit(14, 0, 0, pIMUgain);
+  PIDinit(14, 1.5, 0, pIMUgain);
   timer=millis();           //saev ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
@@ -187,7 +202,7 @@ void setup() {
 
 void loop() {
       CorrectDrift();      //Corrects drift via gyro integration
-      float a = PID(30, ToDeg(yaw), pIMUgain);
+      float a = PID(111.4, ToDeg(yaw), pIMUgain);
       Serial.print("control:"+String(a)+"heading:"+String(ToDeg(yaw)));
       
       if(Serial.available()>0){
@@ -201,7 +216,7 @@ void loop() {
         Serial.println("Started");
         
         //calcRPM(a,0,0,wheelp);
-        calcRPM(a,theta,rpmmax,wheelp);
+        calcRPM(a,theta,rpmmax22,wheelp);
         Serial.print(String(wheelp[0]->rpm)+String(wheelp[1]->rpm)+String(wheelp[2]->rpm));
         startMotion(wheelp);
    }
