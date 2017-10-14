@@ -33,7 +33,7 @@ void startMotion(wheel ** whee){
         digitalWrite(whee[i]->pinb, HIGH);
         //Negative direction
       }
-      analogWrite(whee[i]->pinpwm, abs((int)pwm)/3.5);
+      analogWrite(whee[i]->pinpwm, abs((int)pwm));
   }
 }
 
@@ -45,6 +45,12 @@ void brakeWheels(wheel ** whee){
 }
 
 void calcRPM(int omega, int angle, int transvel, wheel **whee){
+  if(transvel>trans_velMax){
+    transvel = trans_velMax;
+  }
+  if(omega>omegaMax){
+    omega = omegaMax;
+  }
   for(int i=0;i<3;i++){
     whee[i]->trans_rpm = transvel * sin(degtorad(whee[i]->angle - angle)); //RPMtyre=RPM*sin(wheel angle- vel angle)
     whee[i]->ang_rpm = omega * r;

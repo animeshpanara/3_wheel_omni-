@@ -16,6 +16,7 @@
 //#define mode 1
 //Mode 1 - Line following + IMU control
 //Mode 0 - IMU control + Manual Driving
+const float pi = 3.14;
 
 
 //**********************************************************************
@@ -121,6 +122,8 @@ typedef struct wheels {
   int rpm;
 } wheel;
 
+const int wheelradius = 1;//metre
+const float r = 1; //radius of circle with omni wheels as points on the same circle
 const int anglea = 90;
 const int angleb = 210;
 const int anglec = 330;
@@ -135,6 +138,8 @@ const int pinbb = 33;
 const int pinca = 23;
 const int pincb = 25;
 const float HeadTheta=54.2;
+const float trans_velMax=(float)rpmmax*2*pi*wheelradius/60; //m/s
+const float omegaMax = (float)trans_velMax/r;
 //*****************************************************************
 
 
@@ -195,8 +200,6 @@ int ActiveSensor=0;
 
 struct gain IMUgain, Linegain[3];
 struct gain *pIMUgain = &IMUgain, *pLinegain[3] = {&Linegain[0],&Linegain[1],&Linegain[2]};
-const float r = 1;
-const float pi = 3.14;
 int flag = 0;
 int theta;
 
@@ -245,7 +248,7 @@ void loop() {
         }
         pLSA08[j]->JunctionCount=getJunction(pLSA08[j]->address);
       }
-      calcRPM(IMUcontrol,pLSA08[ActiveSensor]->theta+Linecontrol,rpmmax,wheelp);
+      calcRPM(IMUcontrol,pLSA08[ActiveSensor]->theta+Linecontrol,trans_velMax,wheelp);
       //calcRPM(Linecontrol,90,rpmmax,wheelp);
       Serial.println(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Junction1: "+String(pLSA08[ActiveSensor]->JunctionCount));
       if(mode==1){
@@ -269,7 +272,7 @@ void loop() {
           CalibrateIMU(pIMUgain);
           break;
           }
-          calcRPM(IMUcontrol,theta,rpmmax,wheelp);
+          calcRPM(IMUcontrol,theta,trans_velMax,wheelp);
           startMotion(wheelp);
        }
        else
