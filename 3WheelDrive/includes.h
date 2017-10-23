@@ -162,7 +162,7 @@ struct gain {
 
 //******************************************************************
 typedef struct LSA08{
-  int address;
+  char address;
   int theta;
   int JunctionPin;
   int JunctionCount;
