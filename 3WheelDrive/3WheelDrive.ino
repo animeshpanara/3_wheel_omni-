@@ -167,6 +167,14 @@ struct gain {
 
 
 //******************************************************************
+typedef struct LSA08{
+  char Address;
+  int Theta;
+  int JunctionPin;
+  int JunctionCount;
+  int OePin;
+}LSA;
+LSA LSAf={0x01,270,3,0,35},LSAr={0x02,0,2,0,37},LSAl={0x03,180,18,0,39},*LSAArray[3]={&LSAf,&LSAr,&LSAl};
 
 const byte rx = 14;    // Defining pin 0 as Rx
 const byte tx = 15;    // Defining pin 1 as Tx
@@ -174,9 +182,9 @@ const byte OutputEnable[3] = {35,37,39};
 const float LSAlength = 11.1;
 const float LSAdistance = 46.18;
 const int JucntionPulse[3]={3,2,18};
-int JucntionCount[3]={0};
-char add[3]={0x01,0x02,0x03};
-int Theta[3]={270,0,180};
+//int JucntionCount[3]={0};
+//char add[3]={0x01,0x02,0x03};
+//int Theta[3]={270,0,180};
 int Test[3]={6,1,0};
 int ActiveSensor=0;
 //enum LSA08{LSA08a,LSA08b,LSA08c};
@@ -204,20 +212,20 @@ void setup() {
   Serial.begin(9600);
   //Serial2.begin(115200);
   Serial3.begin(9600);
-  pinMode(JucntionPulse[0],INPUT);
-  pinMode(JucntionPulse[1],INPUT);
-  pinMode(JucntionPulse[2],INPUT);
+  pinMode(LSAArray[0]->JunctionPin,INPUT);
+  pinMode(LSAArray[1]->JunctionPin,INPUT);
+  pinMode(LSAArray[2]->JunctionPin,INPUT);
   IMUinit();                //Initialise IMU
   SetOffset();              //Take initial readings for offset
   initDriving();
-  initLSA(9600,OutputEnable[0]);            //const int minControl = -255;      const int maxControl = 255;
-  initLSA(9600,OutputEnable[1]);
+  initLSA(9600,LSAArray[0]->OePin);            //const int minControl = -255;      const int maxControl = 255;
+  initLSA(9600,LSAArray[1]->OePin);
   //PIDinit(15,0,0,0,-255,255, pIMUgain);
-  PIDinit(13,2,0,0,-255,255, pIMUgain);
+  PIDinit(13,3,0,0,-255,255, pIMUgain);
   PIDinit(.5,0,0,0,-255,255,pLinegain[0]);
   PIDinit(.5,0,0,0,-255,255,pLinegain[1]);
-  clearJunction(add[0]);
-  clearJunction(add[1]);
+  clearJunction(LSAArray[0]->Address);
+  clearJunction(LSAArray[1]->Address);
   timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
@@ -226,25 +234,28 @@ void setup() {
 ///////////////////Set limit if >90
 
 void loop() {
-      if(JucntionCount[ActiveSensor]>Test[ActiveSensor]){
-        Serial.println("hello");
+      if(LSAArray[ActiveSensor]->JunctionCount>Test[ActiveSensor]){
         brakeWheels(wheelp);
+        int ps,ns;
+        ps=ActiveSensor;
         ActiveSensor^=1;
-        
+        //ChangeDir(ps,ActiveSensor);
+
       }
       else{
       float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
-      float Linecontrol=LineControl(OutputEnable[ActiveSensor],17,35,pLinegain[ActiveSensor]);
+      float Linecontrol=LineControl(LSAArray[ActiveSensor]->OePin,17,35,pLinegain[ActiveSensor]);
       for(int j=0;j<2;j++)
-      if(digitalRead(JucntionPulse[j])){
-        while(digitalRead(JucntionPulse[j])){
+      if(digitalRead(LSAArray[j]->JunctionPin)){
+        while(digitalRead(LSAArray[j]->JunctionPin)){
         Serial.print("hello");
         }
-        JucntionCount[j]=getJunction(add[j]);
+        LSAArray[j]->JunctionCount=getJunction(LSAArray[j]->Address);
+        
       }
-      calcRPM(IMUcontrol,Theta[ActiveSensor]+Linecontrol,rpmmax,wheelp);
+      calcRPM(IMUcontrol,LSAArray[ActiveSensor]->Theta+Linecontrol,rpmmax,wheelp);
       //calcRPM(Linecontrol,90,rpmmax,wheelp);
-      Serial.println(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Junction1: "+String(JucntionCount[ActiveSensor]));
+      Serial.println(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Junction1: "+String(LSAArray[ActiveSensor]->JunctionCount));
       if(mode==1){
       Serial2.flush();
        if(Serial2.available()>0){
