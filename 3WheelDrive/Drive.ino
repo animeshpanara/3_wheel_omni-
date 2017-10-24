@@ -33,7 +33,7 @@ void startMotion(wheel ** whee){
         digitalWrite(whee[i]->pinb, HIGH);
         //Negative direction
       }
-      analogWrite(whee[i]->pinpwm, abs((int)pwm)/3);
+      analogWrite(whee[i]->pinpwm, abs((int)pwm)/4);
   }
 }
 

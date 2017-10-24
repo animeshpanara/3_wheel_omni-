@@ -1,4 +1,4 @@
-#include "includes.h"
+
 //Computes the dot product of two vectors
 float Vector_Dot_Product(float vector1[3],float vector2[3])
 {
