@@ -164,7 +164,8 @@ struct gain {
 
 //This is the init variables for LSA08
 
-
+#define mode 0
+//#define mode 1
 
 //******************************************************************
 typedef struct LSA08{
@@ -181,33 +182,52 @@ const byte tx = 15;    // Defining pin 1 as Tx
 const byte OutputEnable[3] = {35,37,39};
 const float LSAlength = 11.1;
 const float LSAdistance = 46.18;
-const int JucntionPulse[3]={3,2,18};
+//const int JucntionPulse[3]={3,2,18};
 //int JucntionCount[3]={0};
 //char add[3]={0x01,0x02,0x03};
 //int Theta[3]={270,0,180};
 int Test[3]={6,1,0};
 int ActiveSensor=0;
 //enum LSA08{LSA08a,LSA08b,LSA08c};
+enum activeLSA {f,r,l,b,s};
+const int S=0,A=1,B=2,T1=3,T2=4,T3=5;
+
+char arr[6][6][15]={
+                   {{s},{f,s},{f,f,s},{f,l,l,s},{f,f,l,l,s},{f,f,l,l,l,l,l,s}},
+ 
+                   {{b,s},{s},{f,s},{l,s},{f,l,l,s},{f,l,l,l,l,l,s}},
+      
+                   {{b,b,s},{b,s},{s},{b,l,l,s},{l,l,s},{l,l,l,l,l,s}},
+    
+                   {{r,r,b,s},{r,r,s},{r,r,f,s},{s},{r,r,f,l,l,s},{r,r,f,l,l,l,l,l,s}},
+     
+                   {{r,r,b,b,s},{r,r,b,s},{r,r,s},{r,r,b,l,l,s},{s},{l,l,l,s}},
+      
+                   {{r,r,r,r,r,b,b,s},{r,r,r,r,r,b,s},{r,r,r,r,r,s},{r,r,r,r,r,b,l,l,s},{r,r,r,s},{s}}
+
+    };
+
 //*******************************************************************
 
 
 
 struct gain IMUgain, Linegain[3];
 struct gain *pIMUgain = &IMUgain, *pLinegain[3] = {&Linegain[0],&Linegain[1],&Linegain[2]};
-const float r = 1;
+const float rad = 1;
 const float pi = 3.14;
 int flag = 0;
 int theta;
-
+int pos[2];
 wheel wheela = {0, 0, anglea, rpmmax, pinpwma, pinaa, pinab,0}, wheelb = {0, 0, angleb, rpmmax, pinpwmb, pinba, pinbb,0}, wheelc = {0, 0, anglec, rpmmax, pinpwmc, pinca, pincb,0};
 wheel *pwheela = &wheela, *pwheelb = &wheelb, *pwheelc = &wheelc;
 wheels *wheelp[3]={pwheela,pwheelb,pwheelc};
-float aspeed=0,bspeed=0,cspeed=0;
+//float aspeed=0,bspeed=0,cspeed=0;
 
 //enum LSA08 LSA;
 
 float Linecontrol, IMUcontrol;
-
+enum activeLSA dir;
+int index=0;
 void setup() {
   Serial.begin(9600);
   //Serial2.begin(115200);
@@ -220,77 +240,48 @@ void setup() {
   initDriving();
   initLSA(9600,LSAArray[0]->OePin);            //const int minControl = -255;      const int maxControl = 255;
   initLSA(9600,LSAArray[1]->OePin);
+  initLSA(9600,LSAArray[2]->OePin);
   //PIDinit(15,0,0,0,-255,255, pIMUgain);
-  PIDinit(13,3,0,0,-255,255, pIMUgain);
+  PIDinit(11,5 ,0,0,-255,255, pIMUgain);
   PIDinit(.5,0,0,0,-255,255,pLinegain[0]);
   PIDinit(.5,0,0,0,-255,255,pLinegain[1]);
+  PIDinit(.5,0,0,0,-255,255,pLinegain[2]);
   clearJunction(LSAArray[0]->Address);
   clearJunction(LSAArray[1]->Address);
+  clearJunction(LSAArray[2]->Address);
   timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
+  int count=0;
+  Serial.println("Enter start/end");
   
+  while(count!=2){
+    if(Serial.available()>0){
+    String data =Serial.readString();
+    pos[count]=atoi(data.c_str());
+    count++;
+   }
+  }
+  dir = arr[pos[0]][pos[1]][index];
+  Serial.println("Dir:"+String(dir));
+  ActiveSensor = dir;
 }
 ///////////////////Set limit if >90
 
 void loop() {
-      if(LSAArray[ActiveSensor]->JunctionCount>Test[ActiveSensor]){
-        brakeWheels(wheelp);
-        int ps,ns;
-        ps=ActiveSensor;
-        ActiveSensor^=1;
-        //ChangeDir(ps,ActiveSensor);
-
-      }
-      else{
       float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
       float Linecontrol=LineControl(LSAArray[ActiveSensor]->OePin,17,35,pLinegain[ActiveSensor]);
-      for(int j=0;j<2;j++)
-      if(digitalRead(LSAArray[j]->JunctionPin)){
-        while(digitalRead(LSAArray[j]->JunctionPin)){
-        Serial.print("hello");
-        }
-        LSAArray[j]->JunctionCount=getJunction(LSAArray[j]->Address);
-        
-      }
       calcRPM(IMUcontrol,LSAArray[ActiveSensor]->Theta+Linecontrol,rpmmax,wheelp);
-      //calcRPM(Linecontrol,90,rpmmax,wheelp);
       Serial.println(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Junction1: "+String(LSAArray[ActiveSensor]->JunctionCount));
-      if(mode==1){
-      Serial2.flush();
-       if(Serial2.available()>0){
-       char data = Serial2.read();
-       switch(data){
-        case 'w':
-          theta=270;
-          break;
-        case 'a':
-          theta=180;
-          break;
-        case 's':
-          theta=90;
-          break;
-        case 'd':
-          theta=0;
-          break;
-        case 'c':
-          CalibrateIMU(pIMUgain);
-          break;
-          }
-          calcRPM(IMUcontrol,theta,rpmmax,wheelp);
-          startMotion(wheelp);
-       }
-       else
-          brakeWheels(wheelp);
-      }
-      else if(mode==2){
-       if(Serial.available()>0){
+      if(Serial.available()>0){
         String data = Serial.readString();
         Serial.print(data);
         if (data == "s")
           flag^=1;
         else if(data== "c")
             CalibrateIMU(pIMUgain);
+            //IMUcontrol=HeadControl(HeadTheta,pIMUgain);
+      
         else
             theta=atoi(data.c_str());
         }
@@ -301,7 +292,40 @@ void loop() {
       else if(flag==0){
         Serial.println(" Stopped ");
         brakeWheels(wheelp);
+        } 
+
+      //for(int j=0;j<3;j++)
+      int j=ActiveSensor;
+        if(digitalRead(LSAArray[j]->JunctionPin)){
+        while(digitalRead(LSAArray[j]->JunctionPin)){
+        Serial.print("hello");
         }
+        LSAArray[j]->JunctionCount=getJunction(LSAArray[j]->Address);
+        index++;
+        dir = arr[pos[0]][pos[1]][index];
+        //Serial.println(arr[pos[0]][pos[1]][index+1]);
+        //delay(200);
+        if((int)dir==4){
+          flag=0;
+            }
+        else
+        ActiveSensor = (int)dir;
       }
-     }
-}
+      
+      //arr[initpos][finalpos][index]
+      
+//      if(LSAArray[ActiveSensor]->JunctionCount>Test[ActiveSensor]){
+//        brakeWheels(wheelp);
+//        int ps,ns;
+//        ps=ActiveSensor;
+//        ActiveSensor^=1;
+//        //ChangeDir(ps,ActiveSensor);
+//
+//      }
+      //else{
+      
+      //calcRPM(Linecontrol,90,rpmmax,wheelp);
+      
+      //}
+ }
+
