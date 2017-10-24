@@ -40,16 +40,16 @@ void ChangeBaud(char baud, char add)
    sendCommand(command,data,add);
 }
 
-void clearJunction() 
+void clearJunction(char add) 
 {
-  char address = 0x01;
+  char address = add;
   char command = 'X';
   char data = 0x00;
   sendCommand(command,data,address);
 }
 
-int getJunction(){
-  char address = 0x01;
+int getJunction(char add){
+  char address = add;
   char command = 'X';
   char data = 0x01;
  sendCommand(command,data,address);
@@ -66,7 +66,11 @@ byte GetByteOfLSA(byte OutputEnable){                                           
   digitalWrite(OutputEnable,HIGH);
   return a;   
  }
-
+float GetLSAReading(byte OutputEnable){
+  int LineReading = GetByteOfLSA(OutputEnable); 
+  LineReading=35-LineReading;
+  return LineReading;
+}
 float GetThetaofLSA(byte OutputEnable){
    int LineReading = GetByteOfLSA(OutputEnable); 
    LineReading=35-LineReading;

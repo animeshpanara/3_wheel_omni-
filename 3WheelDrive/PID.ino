@@ -8,7 +8,7 @@ void PIDinit(float kp, float kd, float ki,float required,float minControl, float
     gain->minControl = minControl;
     gain->maxControl = maxControl;
     gain->error=0;
-    gain->previousError=0;
+    gain->previousError=1;
     gain->derivativeError=0;
     gain->integralError=0;
   }
