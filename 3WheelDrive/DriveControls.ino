@@ -1,4 +1,3 @@
-#include "includes.h"
 float LineThetaControl(int serialEn,int thetalimit,float PIDmaxbound,gain *pLinegain){
       float Linecontrol;
       float LineTheta = ToDeg(GetThetaofLSA(serialEn));
@@ -11,16 +10,14 @@ float LineThetaControl(int serialEn,int thetalimit,float PIDmaxbound,gain *pLine
       
       return Linecontrol;
 }
-float LineControl(LSA08* LSAa,int thetaPostMaxBound,float PIDmaxbound,gain *pLinegain){
-      float Linecontrol;
-      Serial.print("a");
-      float Lineerror = GetLSAReading(LSAa);
-      Serial.print("a");
+float LineControl(int serialEn,int thetalimit,float PIDmaxbound,gain *pLinegain){
+      float Linecontrol=thetalimit;
+      float Lineerror = GetLSAReading(serialEn);
       if(abs(Lineerror) < PIDmaxbound){
       Linecontrol = PID(Lineerror,pLinegain);
       }
       else{
-      Linecontrol = (float)(pLinegain->previousError)*thetaPostMaxBound/abs(pLinegain->previousError);
+          Linecontrol = (float)(pLinegain->previousError)*thetalimit/abs(pLinegain->previousError);
       }
       return Linecontrol;
 }

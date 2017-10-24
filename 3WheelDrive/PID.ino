@@ -1,4 +1,3 @@
-#include "includes.h"
 
 void PIDinit(float kp, float kd, float ki,float required,float minControl, float maxControl, struct gain * gain) {
     gain->kp = kp;
@@ -8,7 +7,7 @@ void PIDinit(float kp, float kd, float ki,float required,float minControl, float
     gain->minControl = minControl;
     gain->maxControl = maxControl;
     gain->error=0;
-    gain->previousError=0;
+    gain->previousError=1; //wHY ONE
     gain->derivativeError=0;
     gain->integralError=0;
   }

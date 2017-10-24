@@ -67,4 +67,21 @@ void setScale(wheel **whee){
     }
   }
 }
+void ChangeDir(int prevsensor,int ActiveSensor){
+  float lineError,check=255;
+  
+  while(abs(check)>35){
+    Serial.println("Inside Func");
+    float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
+    lineError=LineControl(LSAArray[prevsensor]->OePin,17,35,pLinegain[prevsensor]);
+    check=GetLSAReading(LSAArray[ActiveSensor]->OePin);
+    calcRPM(IMUcontrol,LSAArray[prevsensor]->Theta+Linecontrol,rpmmax/1.5,wheelp);
+    startMotion(wheelp);
+    Serial.println("Check:"+String(check)+"Line:"+String(lineError)+"IMU:"+String(IMUcontrol)+"Juncprev:"+String(LSAArray[prevsensor]->JunctionCount));
+  }
+  clearJunction(LSAArray[prevsensor]->Address);
+  LSAArray[prevsensor]->JunctionCount=0;
+  brakeWheels(wheelp);
+  delay(8000);
+}
 

@@ -1,13 +1,10 @@
 #define SerialLSA Serial3
-#include "includes.h"
 
-void initLSA(int baud, LSA08 ** LSA){
-  for(int i =0;i<3;i++){
-    pinMode(LSA[i]->JunctionPin,INPUT);
-    pinMode(LSA[i]->OutputEnable,OUTPUT);
+void initLSA(int baud,int OutputEnable){
+  pinMode(OutputEnable,OUTPUT);
   //pinMode(serialEn2,OUTPUT);
   //pinMode(serialEn3,OUTPUT);
-    digitalWrite(LSA[i]->OutputEnable,HIGH);
+  digitalWrite(OutputEnable,HIGH);
 //  digitalWrite(serialEn2,HIGH);
 //  digitalWrite(serialEn3,HIGH);
 //  sendCommand('X',0x00,add);
@@ -18,21 +15,19 @@ void initLSA(int baud, LSA08 ** LSA){
 //  sendCommand('R',0x00,add);
 //  sendCommand('D',0x02,add);
 //  ChangeBaud(baud,add);
-   clearJunction(LSA[i]);
-  }
-  
+//  clearJunction();
 }
 
 
-void sendCommand(char command, char data, LSA08 * LSA) {
-  char checksum = LSA->address + command + data;  
-  SerialLSA.write(LSA->address);
+void sendCommand(char command, char data, char address) {
+  char checksum = address + command + data;  
+  SerialLSA.write(address);
   SerialLSA.write(command);
   SerialLSA.write(data);
   SerialLSA.write(checksum);
 }
 
-void ChangeBaud(char baud, LSA08 * LSA)
+void ChangeBaud(char baud, char add)
 {
   char command='R';
   char data;
@@ -42,19 +37,19 @@ void ChangeBaud(char baud, LSA08 * LSA)
             else if(baud==57600) data=3;
                  else if(baud==115200) data=4;
                       else if(baud==230400) data=5;
-   sendCommand(command,data,LSA);
+   sendCommand(command,data,add);
 }
 
-void clearJunction(LSA08 * LSA) 
+void clearJunction(char add) 
 {
-  char address = LSA->address;
+  char address = add;
   char command = 'X';
   char data = 0x00;
   sendCommand(command,data,address);
 }
 
-int getJunction(LSA08 * LSA){
-  char address = LSA->address;
+int getJunction(char add){
+  char address = add;
   char command = 'X';
   char data = 0x01;
  sendCommand(command,data,address);
@@ -63,21 +58,21 @@ int getJunction(LSA08 * LSA){
   return (int(SerialLSA.read()));
 }
 //change serial by serial2
-byte GetByteOfLSA(LSA08 * LSA){                                            //Initially each and every serialLSAEnX(X=1,2,3) should be HIGH
+byte GetByteOfLSA(byte OutputEnable){                                            //Initially each and every serialLSAEnX(X=1,2,3) should be HIGH
   byte a=0;
-  digitalWrite(LSA->OutputEnable,LOW);
+  digitalWrite(OutputEnable,LOW);
   while(SerialLSA.available()<=0);
   a=SerialLSA.read();
-  digitalWrite(LSA->OutputEnable,HIGH);
+  digitalWrite(OutputEnable,HIGH);
   return a;   
  }
-float GetLSAReading(LSA08 * LSA){
-  int LineReading = GetByteOfLSA(LSA->OutputEnable); 
+float GetLSAReading(byte OutputEnable){
+  int LineReading = GetByteOfLSA(OutputEnable); 
   LineReading=35-LineReading;
   return LineReading;
 }
-float GetThetaofLSA(LSA08 * LSA){
-   int LineReading = GetByteOfLSA(LSA->OutputEnable); 
+float GetThetaofLSA(byte OutputEnable){
+   int LineReading = GetByteOfLSA(OutputEnable); 
    LineReading=35-LineReading;
  //  Serial.println(LineReading); 
    float scaledReading = (float)LSAlength*LineReading/70;
