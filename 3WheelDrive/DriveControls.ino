@@ -29,7 +29,7 @@ float HeadControl(float head,gain* IMUgain){
 }
 
 float CompassHeadControl(float head,gain* Compassgain){
-  GetCompassHeading();    
-  float CompassControl = PID(ToDeg(MAG_Heading),Compassgain);
+  GetModifiedCompassHeading();    
+  float CompassControl = PID(CompassHeading,Compassgain);
   return CompassControl;
 }

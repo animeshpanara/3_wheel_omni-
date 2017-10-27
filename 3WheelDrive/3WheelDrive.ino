@@ -6,6 +6,7 @@
  */
 
 #include <Wire.h>
+#include <LSM303.h>
 //#include "Arduino.h"
 
 //The following code is for setting up IMU constants
@@ -15,7 +16,7 @@
 //#define mode 1
 //Mode 1 - Line following + IMU control
 //Mode 0 - IMU control + Manual Driving
-
+LSM303 compass;
 
 
 //**********************************************************************
@@ -75,7 +76,6 @@ float c_magnetom_x;
 float c_magnetom_y;
 float c_magnetom_z;
 float MAG_Heading;
-float MAG_Heading_offset;
 
 float Accel_Vector[3]= {0,0,0}; //Store the acceleration in a vector
 float Gyro_Vector[3]= {0,0,0};//Store the gyros turn rate in a vector
@@ -95,8 +95,11 @@ float errorYaw[3]= {0,0,0};
 unsigned int counter=0;
 byte gyro_sat=0;
 float G_Dt=0.02;    // Integratio n time (DCM algorithm)  We will run the integration loop at 50Hz if possible
+float CompassHeadingOffset=0;
+float CompassHeading;
 
 
+  
 //*********************************************************************
 
 
@@ -212,8 +215,8 @@ char arr[6][6][15]={
 
 
 
-struct gain IMUgain, Linegain[3];
-struct gain *pIMUgain = &IMUgain, *pLinegain[3] = {&Linegain[0],&Linegain[1],&Linegain[2]};
+struct gain IMUgain, Linegain[3], Compassgain;
+struct gain *pIMUgain = &IMUgain, *pLinegain[3] = {&Linegain[0],&Linegain[1],&Linegain[2]}, *pCompassgain = &Compassgain;
 const float rad = 1;
 const float pi = 3.14;
 int flag = 0;
@@ -236,53 +239,57 @@ void setup() {
   pinMode(LSAArray[0]->JunctionPin,INPUT);
   pinMode(LSAArray[1]->JunctionPin,INPUT);
   pinMode(LSAArray[2]->JunctionPin,INPUT);
-  IMUinit();                //Initialise IMU
-  SetIMUOffset();              //Take initial readings for offset
+  CompassInit();
+  //IMUinit();                //Initialise IMU
+  //SetIMUOffset();              //Take initial readings for offset
   initDriving();
   initLSA(9600,LSAArray[0]->OePin);            //const int minControl = -255;      const int maxControl = 255;
   initLSA(9600,LSAArray[1]->OePin);
   initLSA(9600,LSAArray[2]->OePin);
-  //PIDinit(15,0,0,0,-255,255, pIMUgain);
+  PIDinit(15,0,0,0,-255,255, pIMUgain);
   PIDinit(11,5 ,0,0,-255,255, pIMUgain);
+  PIDinit(1,0 ,0,0,-255,255, pCompassgain);
   PIDinit(.5,0,0,0,-255,255,pLinegain[0]);
   PIDinit(.5,0,0,0,-255,255,pLinegain[1]);
   PIDinit(.5,0,0,0,-255,255,pLinegain[2]);
-  clearJunction(LSAArray[0]->Address);
-  clearJunction(LSAArray[1]->Address);
-  clearJunction(LSAArray[2]->Address);
-  timer=millis();           //save ccurrent time in timer ffor gyro integration
+ clearJunction(LSAArray[0]->Address);
+ clearJunction(LSAArray[1]->Address);
+ clearJunction(LSAArray[2]->Address);
+ //timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
   int count=0;
   Serial.println("Enter start/end");
   
-  while(count!=2){
-    if(Serial.available()>0){
-    String data =Serial.readString();
-    pos[count]=atoi(data.c_str());
-    count++;
-   }
+ while(count!=2){
+   if(Serial.available()>0){
+   String data =Serial.readString();
+   pos[count]=atoi(data.c_str());
+   count++;
   }
-  dir = arr[pos[0]][pos[1]][index];
-  Serial.println("Dir:"+String(dir));
-  ActiveSensor = dir;
+ }
+ dir = arr[pos[0]][pos[1]][index];
+ Serial.println("Dir:"+String(dir));
+ ActiveSensor = dir;
 }
 ///////////////////Set limit if >90
 
-void loop() {
-      float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
-      float Linecontrol=LineControl(LSAArray[ActiveSensor]->OePin,17,35,pLinegain[ActiveSensor]);
-      calcRPM(IMUcontrol,LSAArray[ActiveSensor]->Theta+Linecontrol,rpmmax,wheelp);
-      Serial.println(" Head: "+String(IMUcontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(ToDeg(yaw))+" Junction1: "+String(LSAArray[ActiveSensor]->JunctionCount));
+void loop(){
+      //float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
+      float Compasscontrol=CompassHeadControl(HeadTheta,pCompassgain);
+      Serial.print("hello");
+      float Linecontrol=0;//LineControl(LSAArray[ActiveSensor]->OePin,17,35,pLinegain[ActiveSensor]);
+      calcRPM(Compasscontrol,LSAArray[ActiveSensor]->Theta+Linecontrol,rpmmax,wheelp);
+      Serial.println(" Head: "+String(Compasscontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(CompassHeading)+" Junction: "+String(LSAArray[ActiveSensor]->JunctionCount));
       if(Serial.available()>0){
         String data = Serial.readString();
         Serial.print(data);
         if (data == "s")
           flag^=1;
         else if(data== "c")
-            CalibrateIMU(pIMUgain);
+             CalibrateCompass(pCompassgain);
+            //CalibrateIMU(pIMUgain);
             //IMUcontrol=HeadControl(HeadTheta,pIMUgain);
-      
         else
             theta=atoi(data.c_str());
         }
@@ -296,23 +303,23 @@ void loop() {
         } 
 
       //for(int j=0;j<3;j++)
-      int j=ActiveSensor;
-        if(digitalRead(LSAArray[j]->JunctionPin)){
-        while(digitalRead(LSAArray[j]->JunctionPin)){
-        Serial.print("hello");
-        }
-        LSAArray[j]->JunctionCount=getJunction(LSAArray[j]->Address);
-        index++;
-        dir = arr[pos[0]][pos[1]][index];
-        //Serial.println(arr[pos[0]][pos[1]][index+1]);
-        //delay(200);
-        if((int)dir==4){
-          flag=0;
-            }
-        else
-        ActiveSensor = (int)dir;
-      }
-      
+//      int j=ActiveSensor;
+       if(digitalRead(LSAArray[j]->JunctionPin)){
+       while(digitalRead(LSAArray[j]->JunctionPin)){
+       Serial.print("hello");
+       }
+       LSAArray[j]->JunctionCount=getJunction(LSAArray[j]->Address);
+       index++;
+       dir = arr[pos[0]][pos[1]][index];
+       //Serial.println(arr[pos[0]][pos[1]][index+1]);
+       //delay(200);
+       if((int)dir==4){
+         flag=0;
+           }
+       else
+       ActiveSensor = (int)dir;
+     }
+//      
       //arr[initpos][finalpos][index]
       
 //      if(LSAArray[ActiveSensor]->JunctionCount>Test[ActiveSensor]){

@@ -26,9 +26,17 @@ void Compass_Heading()
   MAG_Heading = atan2(-MAG_Y,MAG_X);
 }
 
+void CompassInit(){
+  Wire.begin();
+  compass.init();
+  compass.enableDefault();
+
+  compass.m_min = (LSM303::vector<int16_t>){ -2337,  -2448,  -2669};
+  compass.m_max = (LSM303::vector<int16_t>){ +2954,  +2632,  +2068};
+}
 void GetCompassHeading(){
-Read_Compass();
-Compass_Heading();
+compass.read();
+CompassHeading = compass.heading();
 }
 
 void CalibrateCompass(gain* com){
@@ -36,7 +44,12 @@ void CalibrateCompass(gain* com){
   for(int i=0;i<20;i++){
   GetCompassHeading();
   delay(20);
-  sum +=MAG_Heading;
+  sum +=  CompassHeading;
   }
-  MAG_Heading_offset =  sum/20;  
+  CompassHeadingOffset = sum/20;  
 }
+
+void GetModifiedCompassHeading(){
+  GetCompassHeading();
+  CompassHeading-=CompassHeadingOffset;
+  }

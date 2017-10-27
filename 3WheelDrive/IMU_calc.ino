@@ -10,17 +10,6 @@ void IMUinit(){
   
 }
 
-void GetCompassReading(){
-  
-  //if (counter > 5)  // Read compass data at 10Hz... (5 loop runs)
-    //{
-      //counter=0;
-      Read_Compass();    // Read I2C magnetometer
-      Compass_Heading(); // Calculate magnetic heading
-    //}
-
-}
-
 void GetIMUReading(){
   if((millis()-timer)>=20)  // Main loop runs at 50Hz
   {

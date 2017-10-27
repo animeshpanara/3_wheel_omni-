@@ -14,7 +14,7 @@ LIS3MDL mag;
 #include <LSM303.h>
 
 L3G gyro;
-LSM303 compass;
+//LSM303 compass;
 
 #endif
 
