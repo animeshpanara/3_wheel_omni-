@@ -26,3 +26,17 @@ void Compass_Heading()
   MAG_Heading = atan2(-MAG_Y,MAG_X);
 }
 
+void GetCompassHeading(){
+Read_Compass();
+Compass_Heading();
+}
+
+void CalibrateCompass(gain* com){
+  float sum;
+  for(int i=0;i<20;i++){
+  GetCompassHeading();
+  delay(20);
+  sum +=MAG_Heading;
+  }
+  MAG_Heading_offset =  sum/20;  
+}

@@ -66,6 +66,7 @@ byte GetByteOfLSA(byte OutputEnable){                                           
   digitalWrite(OutputEnable,HIGH);
   return a;   
  }
+ 
 float GetLSAReading(byte OutputEnable){
   int LineReading = GetByteOfLSA(OutputEnable); 
   LineReading=35-LineReading;

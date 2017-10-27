@@ -75,8 +75,9 @@ float c_magnetom_x;
 float c_magnetom_y;
 float c_magnetom_z;
 float MAG_Heading;
+float MAG_Heading_offset;
 
-float Accel_Vector[3 ]= {0,0,0}; //Store the acceleration in a vector
+float Accel_Vector[3]= {0,0,0}; //Store the acceleration in a vector
 float Gyro_Vector[3]= {0,0,0};//Store the gyros turn rate in a vector
 float Omega_Vector[3]= {0,0,0}; //Corrected Gyro_Vector data
 float Omega_P[3]= {0,0,0};//Omega Proportional correction
@@ -236,7 +237,7 @@ void setup() {
   pinMode(LSAArray[1]->JunctionPin,INPUT);
   pinMode(LSAArray[2]->JunctionPin,INPUT);
   IMUinit();                //Initialise IMU
-  SetOffset();              //Take initial readings for offset
+  SetIMUOffset();              //Take initial readings for offset
   initDriving();
   initLSA(9600,LSAArray[0]->OePin);            //const int minControl = -255;      const int maxControl = 255;
   initLSA(9600,LSAArray[1]->OePin);
