@@ -7,6 +7,7 @@
 
 #include <Wire.h>
 #include <LSM303.h>
+#include<SPI.h>
 //#include "Arduino.h"
 
 //The following code is for setting up IMU constants
@@ -172,48 +173,77 @@ struct gain {
 //#define mode 1
 
 //******************************************************************
-typedef struct LSA08{
-  char Address;
-  int Theta;
-  int JunctionPin;
-  int JunctionCount;
-  int OePin;
-}LSA;
-LSA LSAf={0x01,270,3,0,35},LSAr={0x02,0,2,0,37},LSAl={0x03,180,18,0,39},*LSAArray[3]={&LSAf,&LSAr,&LSAl};
+// typedef struct LSA08{
+//   char Address;
+//   int Theta;
+//   int JunctionPin;
+//   int JunctionCount;
+//   int OePin;
+// }LSA;
+// LSA LSAf={0x01,270,3,0,35},LSAr={0x02,0,2,0,37},LSAl={0x03,180,18,0,39},*LSAArray[3]={&LSAf,&LSAr,&LSAl};
 
-const byte rx = 14;    // Defining pin 0 as Rx
-const byte tx = 15;    // Defining pin 1 as Tx
-const byte OutputEnable[3] = {35,37,39};
-const float LSAlength = 11.1;
-const float LSAdistance = 46.18;
-//const int JucntionPulse[3]={3,2,18};
-//int JucntionCount[3]={0};
-//char add[3]={0x01,0x02,0x03};
-//int Theta[3]={270,0,180};
-int Test[3]={6,1,0};
-int ActiveSensor=0;
-//enum LSA08{LSA08a,LSA08b,LSA08c};
-enum activeLSA {f,r,l,b,s};
-const int S=0,A=1,B=2,T1=3,T2=4,T3=5;
+// const byte rx = 14;    // Defining pin 0 as Rx
+// const byte tx = 15;    // Defining pin 1 as Tx
+// const byte OutputEnable[3] = {35,37,39};
+// const float LSAlength = 11.1;
+// const float LSAdistance = 46.18;
+// //const int JucntionPulse[3]={3,2,18};
+// //int JucntionCount[3]={0};
+// //char add[3]={0x01,0x02,0x03};
+// //int Theta[3]={270,0,180};
+// int Test[3]={6,1,0};
+// int ActiveSensor=0;
+// //enum LSA08{LSA08a,LSA08b,LSA08c};
+// enum activeLSA {f,r,l,b,s};
+// const int S=0,A=1,B=2,T1=3,T2=4,T3=5;
 
-char arr[6][6][15]={
-                   {{s},{f,s},{f,f,s},{f,l,l,s},{f,f,l,l,s},{f,f,l,l,l,l,l,s}},
- 
-                   {{b,s},{s},{f,s},{l,s},{f,l,l,s},{f,l,l,l,l,l,s}},
+// char arr[6][6][15]={
+//                    {{s},{f,s},{f,f,s},{f,l,l,s},{f,f,l,l,s},{f,f,l,l,l,l,l,s}},
+  
+//                    {{b,s},{s},{f,s},{l,s},{f,l,l,s},{f,l,l,l,l,l,s}},
       
-                   {{b,b,s},{b,s},{s},{b,l,l,s},{l,l,s},{l,l,l,l,l,s}},
+//                    {{b,b,s},{b,s},{s},{b,l,l,s},{l,l,s},{l,l,l,l,l,s}},
     
-                   {{r,r,b,s},{r,r,s},{r,r,f,s},{s},{r,r,f,l,l,s},{r,r,f,l,l,l,l,l,s}},
+//                    {{r,r,b,s},{r,r,s},{r,r,f,s},{s},{r,r,f,l,l,s},{r,r,f,l,l,l,l,l,s}},
      
-                   {{r,r,b,b,s},{r,r,b,s},{r,r,s},{r,r,b,l,l,s},{s},{l,l,l,s}},
+//                    {{r,r,b,b,s},{r,r,b,s},{r,r,s},{r,r,b,l,l,s},{s},{l,l,l,s}},
       
-                   {{r,r,r,r,r,b,b,s},{r,r,r,r,r,b,s},{r,r,r,r,r,s},{r,r,r,r,r,b,l,l,s},{r,r,r,s},{s}}
+//                    {{r,r,r,r,r,b,b,s},{r,r,r,r,r,b,s},{r,r,r,r,r,s},{r,r,r,r,r,b,l,l,s},{r,r,r,s},{s}}
 
-    };
+//     };
 
 //*******************************************************************
 
 
+
+
+
+//Constants for manual driving 
+//*******************************************************************
+  
+  
+  
+  const int slave=53;
+  SPISettings settingA(500000,LSBFIRST,SPI_MODE3);
+  volatile char data_array[21];
+  //SPISettings settingA(500000,LSBFIRST,SPI_MODE3);
+  char PS2_POLLBUTTON[9];
+  enum {released,pressed};
+  enum {select,leftStick, rightStick,start, up, right, down, left}; //3rd byte from ps2 controller
+  enum {leftFront2, rightFront2, leftFront1, rightFront1, triangle_up, circle_right, cross_down, square_left}; // 4th byte from ps2 controlle uint8_t x,y,a,b,c,d;
+  enum {sel_Button,lStick,rStick,start_Button,up_Button,right_Button,down_Button,left_Button,l2_Button,r2_Button,l1_Button,r1_Button,triangle_Button,circle_Button,cross_Button,square_Button};//Make array of buttons
+  uint8_t x,y,rv,lh,lv,rh;
+  float r1,r2;
+  double w1,w2;
+  bool CurrButtonState[16]={released};
+  
+
+
+
+
+
+
+//****************************************************************************
 
 struct gain IMUgain, Linegain[3], Compassgain;
 struct gain *pIMUgain = &IMUgain, *pLinegain[3] = {&Linegain[0],&Linegain[1],&Linegain[2]}, *pCompassgain = &Compassgain;
@@ -224,63 +254,55 @@ int theta;
 int pos[2];
 wheel wheela = {0, 0, anglea, rpmmax, pinpwma, pinaa, pinab,0}, wheelb = {0, 0, angleb, rpmmax, pinpwmb, pinba, pinbb,0}, wheelc = {0, 0, anglec, rpmmax, pinpwmc, pinca, pincb,0};
 wheel *pwheela = &wheela, *pwheelb = &wheelb, *pwheelc = &wheelc;
-wheels *wheelp[3]={pwheela,pwheelb,pwheelc};
+wheel *wheelp[3]={&wheela,&wheelb,&wheelc};
 //float aspeed=0,bspeed=0,cspeed=0;
-
+bool buttonmove=false;
+     
 //enum LSA08 LSA;
 
 float Linecontrol, IMUcontrol;
-enum activeLSA dir;
+//enum activeLSA dir;
 int index=0;
 void setup() {
   Serial.begin(9600);
   //Serial2.begin(115200);
   Serial3.begin(9600);
-  pinMode(LSAArray[0]->JunctionPin,INPUT);
-  pinMode(LSAArray[1]->JunctionPin,INPUT);
-  pinMode(LSAArray[2]->JunctionPin,INPUT);
-  CompassInit();
-  //IMUinit();                //Initialise IMU
-  //SetIMUOffset();              //Take initial readings for offset
+  //CompassInit();
+  IMUinit();                //Initialise IMU
+  SetIMUOffset();              //Take initial readings for offset
   initDriving();
-  initLSA(9600,LSAArray[0]->OePin);            //const int minControl = -255;      const int maxControl = 255;
-  initLSA(9600,LSAArray[1]->OePin);
-  initLSA(9600,LSAArray[2]->OePin);
-  PIDinit(15,0,0,0,-255,255, pIMUgain);
-  PIDinit(11,5 ,0,0,-255,255, pIMUgain);
-  PIDinit(1,0 ,0,0,-255,255, pCompassgain);
-  PIDinit(.5,0,0,0,-255,255,pLinegain[0]);
-  PIDinit(.5,0,0,0,-255,255,pLinegain[1]);
-  PIDinit(.5,0,0,0,-255,255,pLinegain[2]);
- clearJunction(LSAArray[0]->Address);
- clearJunction(LSAArray[1]->Address);
- clearJunction(LSAArray[2]->Address);
- //timer=millis();           //save ccurrent time in timer ffor gyro integration
+  initps2();
+  // PIDinit(15,0,0,0,-255,255, pIMUgain);
+  PIDinit(1,0 ,0,0,-255,255, pIMUgain);
+  //PIDinit(13,5 ,0,0,-255,255, pCompassgain);
+  //timer=millis();           //save ccurrent time in timer ffor gyro integration
   delay(20);
   counter=0;
   int count=0;
-  Serial.println("Enter start/end");
-  
- while(count!=2){
-   if(Serial.available()>0){
-   String data =Serial.readString();
-   pos[count]=atoi(data.c_str());
-   count++;
-  }
- }
- dir = arr[pos[0]][pos[1]][index];
- Serial.println("Dir:"+String(dir));
- ActiveSensor = dir;
 }
-///////////////////Set limit if >90
-
+// //////////////////Set limit if >90
+bool calibratenext;
 void loop(){
-      //float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
-      float Compasscontrol=CompassHeadControl(HeadTheta,pCompassgain);
-      Serial.print("hello");
-      float Linecontrol=0;//LineControl(LSAArray[ActiveSensor]->OePin,17,35,pLinegain[ActiveSensor]);
-      calcRPM(Compasscontrol,LSAArray[ActiveSensor]->Theta+Linecontrol,rpmmax,wheelp);
-      Serial.println(" Head: "+String(Compasscontrol)+" Line: "+String(Linecontrol)+" CurrentYaw: "+ String(CompassHeading)+" Junction: "+String(LSAArray[ActiveSensor]->JunctionCount));
+      float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
+      buttonmove=false;
+      calibratenext=false;
+      GetPS2value();
+      PS2executePressed();
+      //float Compasscontrol;
+      w1=((int)(-w1+360)%360);
+      r1=r1/128;
+//      if(r2!=0 && buttonmove == false)
+//      {
+//          calcRPM(w2/abs(w2)*rpmmax,w1,r1*rpmmax,wheelp);
+//          calibratenext=true;
+//      }
+//      else if(buttonmove==false)
+//      {
+//      CalibrateCompass(pCompassgain);
+      //Compasscontrol=CompassHeadControl(HeadTheta,pCompassgain);
+      calcRPM(-IMUcontrol,w1,r1*rpmmax,wheelp);
+//      }
+      Serial.println(" Head: "+String(IMUcontrol)+" Vel: "+String(r1*rpmmax)+" CurrentYaw: "+ String(ToDeg(yaw))+ "Omega :"+String(r1));
       if(Serial.available()>0){
         String data = Serial.readString();
         Serial.print(data);
@@ -288,8 +310,6 @@ void loop(){
           flag^=1;
         else if(data== "c")
              CalibrateCompass(pCompassgain);
-            //CalibrateIMU(pIMUgain);
-            //IMUcontrol=HeadControl(HeadTheta,pIMUgain);
         else
             theta=atoi(data.c_str());
         }
@@ -301,39 +321,9 @@ void loop(){
         Serial.println(" Stopped ");
         brakeWheels(wheelp);
         } 
-
-      //for(int j=0;j<3;j++)
-//      int j=ActiveSensor;
-       if(digitalRead(LSAArray[j]->JunctionPin)){
-       while(digitalRead(LSAArray[j]->JunctionPin)){
-       Serial.print("hello");
-       }
-       LSAArray[j]->JunctionCount=getJunction(LSAArray[j]->Address);
-       index++;
-       dir = arr[pos[0]][pos[1]][index];
-       //Serial.println(arr[pos[0]][pos[1]][index+1]);
-       //delay(200);
-       if((int)dir==4){
-         flag=0;
-           }
-       else
-       ActiveSensor = (int)dir;
-     }
-//      
-      //arr[initpos][finalpos][index]
-      
-//      if(LSAArray[ActiveSensor]->JunctionCount>Test[ActiveSensor]){
-//        brakeWheels(wheelp);
-//        int ps,ns;
-//        ps=ActiveSensor;
-//        ActiveSensor^=1;
-//        //ChangeDir(ps,ActiveSensor);
-//
-//      }
-      //else{
-      
-      //calcRPM(Linecontrol,90,rpmmax,wheelp);
-      
-      //}
+        if(calibratenext==true)
+        {
+          CompassHeadingOffset=CompassHeading;
+        }
  }
 

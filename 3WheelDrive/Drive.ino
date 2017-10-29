@@ -33,7 +33,7 @@ void startMotion(wheel ** whee){
         digitalWrite(whee[i]->pinb, HIGH);
         //Negative direction
       }
-      analogWrite(whee[i]->pinpwm, abs((int)pwm)/4);
+      analogWrite(whee[i]->pinpwm, abs((int)pwm)/2);
   }
 }
 
@@ -45,6 +45,7 @@ void brakeWheels(wheel ** whee){
 }
 
 void calcRPM(int omega, int angle, int transvel, wheel **whee){
+  int r = 1;
   for(int i=0;i<3;i++){
     whee[i]->trans_rpm = transvel * sin(degtorad(whee[i]->angle - angle)); //RPMtyre=RPM*sin(wheel angle- vel angle)
     whee[i]->ang_rpm = omega * r;
@@ -66,22 +67,5 @@ void setScale(wheel **whee){
       whee[i]->rpm = (float)whee[i]->rpm*rpmmax/maxm;
     }
   }
-}
-void ChangeDir(int prevsensor,int ActiveSensor){
-  float lineError,check=255;
-  
-  while(abs(check)>35){
-    Serial.println("Inside Func");
-    float IMUcontrol=HeadControl(HeadTheta,pIMUgain);
-    lineError=LineControl(LSAArray[prevsensor]->OePin,17,35,pLinegain[prevsensor]);
-    check=GetLSAReading(LSAArray[ActiveSensor]->OePin);
-    calcRPM(IMUcontrol,LSAArray[prevsensor]->Theta+Linecontrol,rpmmax/1.5,wheelp);
-    startMotion(wheelp);
-    Serial.println("Check:"+String(check)+"Line:"+String(lineError)+"IMU:"+String(IMUcontrol)+"Juncprev:"+String(LSAArray[prevsensor]->JunctionCount));
-  }
-  clearJunction(LSAArray[prevsensor]->Address);
-  LSAArray[prevsensor]->JunctionCount=0;
-  brakeWheels(wheelp);
-  delay(8000);
 }
 

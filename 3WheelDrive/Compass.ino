@@ -40,6 +40,7 @@ CompassHeading = compass.heading();
 }
 
 void CalibrateCompass(gain* com){
+  Serial.println("Calibrating compass");
   float sum;
   for(int i=0;i<20;i++){
   GetCompassHeading();
