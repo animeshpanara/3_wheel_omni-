@@ -13,7 +13,7 @@ void PIDinit(float kp, float kd, float ki,float required,float minControl, float
     gain->integralError=0;
   }
 
-  int PID(float current, struct gain * gain) {
+float PID(float current, struct gain * gain) {
     gain->error = gain->required - current; //WHen car left, right sensors off, take right control positive
     gain->integralError += gain->error;
     gain->derivativeError = gain->previousError - gain->error; ///*********************
@@ -21,10 +21,11 @@ void PIDinit(float kp, float kd, float ki,float required,float minControl, float
 
     float control = gain->kp * gain->error + gain->ki * gain->integralError + gain->kd * gain->derivativeError;
 
-    if (control > gain->maxControl)
-      control = gain->maxControl;
-    if (control < gain->minControl)
-      control = gain->minControl;
+//    if (control > gain->maxControl)
+//      control = gain->maxControl;
+//    if (control < gain->minControl)
+//      control = gain->minControl;
     return control;
-  }
+}
+
 
