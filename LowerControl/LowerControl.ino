@@ -1,7 +1,10 @@
 #include <DueTimer.h>
 //#include "digitalWriteFast.h"
-#define Time 0.1
+#define Time 0.05
 #define MaxPwm 255
+#define GearRatio 0.87
+#define desiredpwm(x) (x*255.0)/320.0  
+int flag=0;
 struct gain {
   float kd;
   float kp;
@@ -24,9 +27,9 @@ struct motor{
 };
 typedef struct motor MOTOR;
 
-MOTOR MotorA={52,50,13};
-MOTOR MotorB={51,53,12};
-MOTOR MotorC={48,49,11};
+MOTOR MotorA={52,50,8};
+MOTOR MotorB={48,46,7};
+MOTOR MotorC={36,38,6};
 
 MOTOR *motors[3]={&MotorA,&MotorB,&MotorC};
 
@@ -41,19 +44,19 @@ struct encoder{
   int channelB;
   long int Count;
   long int previousCount;
-  int Rpm;
+  int Rpm; 
   int Ppr;
 };
 
 typedef struct encoder Encoder;
 
 //Encoder encoderA,encoderB,encoderC;
-Encoder encoder1={22,24,0,0,0,1024};
-Encoder encoder2={23,25,0,0,0,1024};
-Encoder encoder3={26,27,0,0,0,1024};
-Encoder *encoderA=&encoder1;
+Encoder encoder1={34,32,0,0,0,200};
+Encoder encoder2={28,26,0,0,0,200};
+Encoder encoder3={24,22,0,0,0,200};
+Encoder *encoderA=&encoder3;
 Encoder *encoderB=&encoder2;
-Encoder *encoderC=&encoder3;
+Encoder *encoderC=&encoder1;
 //encoderC={};
 float outsee[3]={0};
 float Output[3];
@@ -62,28 +65,31 @@ void setup(){
   initEncoders();
   Serial.begin(9600);
   Timer1.attachInterrupt(Timerhandler);
-  Timer1.start(100000);
+  Timer1.start(100000/2);
   
   initMotor(motors[0]);
   initMotor(motors[1]);
   initMotor(motors[2]);
   
-  PIDinit(0.1,0,0,0,0,255,pMotorgain[0]);
+  PIDinit(0.038,0.015,0,0,0,255,pMotorgain[0]);
   
-  PIDinit(0.1,0,0,0,0,255,pMotorgain[1]);
+  PIDinit(0.038,0.015,0,0,0,255,pMotorgain[1]);
   
-  PIDinit(0.1,0,0,0,0,255,pMotorgain[2]);
+  PIDinit(0.038,0.015,0,0,0,255,pMotorgain[2]);
 
-  pMotorgain[0]->required=50;
-  pMotorgain[2]->required=50;
+  pMotorgain[0]->required=0;
+  pMotorgain[1]->required=0;
+  pMotorgain[2]->required=0;
+  Serial.println("================================");
+  delay(5000);
   
 }
 
 void Timerhandler(){
-  
-  encoderA->Rpm=((encoderA->Count-encoderA->previousCount)*60.0)/(Time*12*encoderA->Ppr);
-  encoderB->Rpm=((encoderB->Count-encoderB->previousCount)*60.0)/(Time*12*encoderB->Ppr);
-  encoderC->Rpm=((encoderC->Count-encoderC->previousCount)*60.0)/(Time*12*encoderC->Ppr);
+  if(flag==1){
+  encoderA->Rpm=((encoderA->Count-encoderA->previousCount)*60.0)/(Time*GearRatio*encoderA->Ppr);
+  encoderB->Rpm=((encoderB->Count-encoderB->previousCount)*60.0)/(Time*GearRatio*encoderB->Ppr);
+  encoderC->Rpm=((encoderC->Count-encoderC->previousCount)*60.0)/(Time*GearRatio*encoderC->Ppr);
   encoderA->previousCount=encoderA->Count;
   encoderB->previousCount=encoderB->Count;
   encoderC->previousCount=encoderC->Count;
@@ -93,18 +99,37 @@ void Timerhandler(){
   temp[0]=PID(encoderA->Rpm,pMotorgain[0]);
   temp[1]=PID(encoderB->Rpm,pMotorgain[1]);
   temp[2]=PID(encoderC->Rpm,pMotorgain[2]);
-
+  //Serial.println("A: "+String(temp[0])+"B: "+String(temp[1])+"C: "+String(temp[2]));
   Output[0]+=temp[0];
   Output[1]+=temp[1];
   Output[2]+=temp[2];
 
+  //outsee[0]=drivewheel(128,MaxPwm,motors[0]);
+  //outsee[1]=drivewheel(128,MaxPwm,motors[1]);
+  //outsee[2]=drivewheel(128,MaxPwm,motors[2]);
+  
   outsee[0]=drivewheel(Output[0],MaxPwm,motors[0]);
   outsee[1]=drivewheel(Output[1],MaxPwm,motors[1]);
   outsee[2]=drivewheel(Output[2],MaxPwm,motors[2]);
+  }
+  else
+  {
+    for(int i=0;i<3;i++){
+    digitalWrite(motors[i]->pin1,HIGH);
+    digitalWrite(motors[i]->pin2,HIGH);
+    }
+  }
+
   
 }
 void loop(){
-  Serial.println("Rpm A:"+ String(encoderA->Rpm)+" Rpm B:"+ String(pMotorgain[0]->required)+" Rpm C:"+ String(encoderC->Rpm) + "Out: "+String(Output[0])+" "+String(Output[1])+" "+String(Output[2])+"outsee:"+String(outsee[0]));//+"Rpm a:"+ String(encoderA->Rpm));
+  char data;
+  if(Serial.available()>0)
+    data=Serial.read();
+  if(data=='s')
+    flag^=1;
+  
+  Serial.println("Rpm A:"+ String(encoderA->Rpm)+" Rpm B:"+ String(encoderB->Rpm)+" Rpm C:"+ String(encoderC->Rpm) + "Out: "+String(Output[0])+" "+String(Output[1])+" "+String(Output[2])+"outsee:"+String(outsee[0]));//+"Rpm a:"+ String(encoderA->Rpm));
 }
 void initEncoders(){
   pinMode(encoderA->channelA, INPUT);
