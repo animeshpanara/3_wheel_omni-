@@ -1,20 +1,20 @@
-bool alignBot(int alignTolerance)
+int alignBot(int alignTolerance)
 {
    float alignControlActive=LineControl(LSAArray[f]->OePin,25,35,pAligngain);
    float alignControlPerpendicular=LineControl(LSAArray[l]->OePin,25,35,pAligngainperp);
    int theta = (((int)ToDeg((atan2(-alignControlPerpendicular,-alignControlActive)))+90));
    theta = (theta +LSAArray[f]->Theta)%360;
-   float speed = (float)sqrt(pow(alignControlActive,2)+pow(alignControlPerpendicular,2))/(25*1.414);
-   calcRPM(-Omegacontrol,theta,speed*alignrpm,pwheel);              
+   float speed1 = (float)sqrt(pow(alignControlActive,2)+pow(alignControlPerpendicular,2))/(25*1.414);
+   calcRPM(-Omegacontrol,theta,speed1*alignrpm,pwheel);              
    if(abs(alignControlActive)<alignTolerance && abs(alignControlPerpendicular)<alignTolerance)
       alignCounter++;
    else
       alignCounter = 0;   
-   Serial.println("Theta "+String(theta)+"Speed "+String(speed)+"Perp " + String(alignControlPerpendicular)+ "Active "+String(alignControlActive));
+   Serial.println("Theta "+String(theta)+"Speed "+String(speed1)+"Perp " + String(alignControlPerpendicular)+ "Active "+String(alignControlActive));
    if(alignCounter>10)
-      return true;
+      return 1;
    else
-      return false;
+      return 0;
 }
 
 bool alignBot1(int x,int Tolerance)
@@ -85,7 +85,7 @@ void RotateBot(bool dir,int Tolerance)
 }
 void LoadBot(){
   int LoadPos;
-  if(pos[0]==3)
+  if(pos[1]==3)
   LoadPos=1;
   else
   LoadPos=2;

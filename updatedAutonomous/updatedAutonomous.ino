@@ -145,7 +145,7 @@ const int S=0,A=1,B=2,T1=3,T2=4,T3=5;
 char arr[6][6][15]={
                    {{s},{r,s},{r,r,s},{r,f,f,s},{r,r,f,f,s},{r,r,f,f,f,f,f,s}},
  
-                   {{l,s},{s},{r,s},{f,s},{r,f,f,s},{r,f,f,f,f,f,s}},
+                   {{l,s},{s},{r,s},{f,f,s},{r,f,f,s},{r,f,f,f,f,f,s}},
       
                    {{l,l,s},{l,s},{s},{l,f,f,s},{f,f,s},{f,f,f,f,f,s}},
     
@@ -205,7 +205,7 @@ const int pinba = 31;
 const int pinbb = 33;
 const int pinca = 23;
 const int pincb = 25;
-const int alignrpm=150;
+const int alignrpm=130;
 const float HeadTheta=54.2;
 int rpmmax=RPMMAX;
 //*****************************************************************
@@ -278,13 +278,14 @@ int yawdeg;
 volatile int cnttt=0;
 float Linecontrol=0, Omegacontrol=0; 
 bool Dirchange=0;
-int Rotateflag=0;
+int Rotateflag=-1;
 int ToleranceOfAlignment=10;
 bool Throwcomplete=0;
 bool LoadFlag=0;
 int alignCounter=0;
-int cyclecomplete=0;
-int ThrowLocation=4;
+int alignCounter1=0;
+int cyclecomplete=1;
+int ThrowLocation=3;
 
 
 void setup() {
@@ -344,7 +345,7 @@ void setup() {
   PerpendicularLineSensor=r;
   
   pos[0]=0;
-  pos[1]=3;
+  pos[1]=1;
   dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex]; 
   rdir = (enum activeLSA)abs((int)dir-3);
   pdir = (enum activeLSA)(((int)dir+2)%4);   
@@ -354,28 +355,15 @@ void setup() {
   if(REDBOXSetup){
     while(abs(GetLSAReading(LSAArray[r]->OePin))>25){
     Serial.println("Setup2");
-    //int Linecontrol=LineControl(LSAArray[ActiveLineSensor]->OePin,11,35,pLinegain[ActiveLineSensor]);
-    //if(!(digitalRead(LSA Array[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
-    //Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
-    //calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3,pwheel);
-    //TransmitRPM(pwheel);             
     calcRPM(0,LSAArray[f]->Theta,rpmmax/3,pwheel);
     TransmitRPM(pwheel);            
     }
     while(abs(GetLSAReading(LSAArray[r]->OePin))<200){
-    //Linecontrol=LineControl(LSAArray[ActiveLineSensor]->OePin,11,35,pLinegain[ActiveLineSensor]);
-    //if(!(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
-    //Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
     calcRPM(0,LSAArray[f]->Theta,rpmmax/3,pwheel);
     TransmitRPM(pwheel);             
     }
     while(abs(GetLSAReading(LSAArray[r]->OePin))>25){
     Serial.println("Setup2");
-    //int Linecontrol=LineControl(LSAArray[ActiveLineSensor]->OePin,11,35,pLinegain[ActiveLineSensor]);
-    //if(!(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
-    //Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
-    //calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3,pwheel);
-    //TransmitRPM(pwheel);             
     calcRPM(0,LSAArray[f]->Theta,rpmmax/3,pwheel);
     TransmitRPM(pwheel);            
     }
@@ -417,25 +405,26 @@ void loop(){
               }
            }
           else{
-             Linecontrol=LineControl(LSAArray[ActiveLineSensor]->OePin,11,35,pLinegain[ActiveLineSensor]);
+             Linecontrol=LineControl(LSAArray[ActiveLineSensor]->OePin,22
+             ,35,pLinegain[ActiveLineSensor]);
              if(!(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
              Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
              }
              Serial.println("LineControl:"+String(Linecontrol)+"OmegaControl:"+String(Omegacontrol));
             if(arr[pos[0]][pos[1]][posindex]==4 && alignedFlag==0)
             {
-              if(abs(GetLSAReading(LSAArray[PerpendicularLineSensor]->OePin))<15)
-              {
-                
-               for(int k =0;k<3;k++){
-                 pwheel[k]->rpm=0;
-               }
-                 alignedFlag=1; 
-              }
-              else
-              {
-                calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3,pwheel);
-              }
+                  if(abs(GetLSAReading(LSAArray[PerpendicularLineSensor]->OePin))<15)
+                  {
+                    
+                     for(int k =0;k<3;k++){
+                       pwheel[k]->rpm=0;
+                     }
+                       alignedFlag=1; 
+                  }
+                  else
+                  {
+                      calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3,pwheel);
+                  }
             }
           else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==2)
           {//set align flag 0 before AND afterrotate 1 
@@ -445,54 +434,50 @@ void loop(){
           }
           else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==1)
           {//set align flag 0 before AND afterrotate 1 
-            RotateBot(1,15);
+            RotateBot(1,20);
             ToleranceOfAlignment=3;
             Rotateflag=-2;
           }
           else if(arr[pos[0]][pos[1]][posindex]==4 && alignedFlag==1)
             {
               //ActiveLineSensor;
-              alignCounter+=alignBot(ToleranceOfAlignment);
+              alignCounter1+=alignBot(ToleranceOfAlignment);
+              //if(pos[1]!=1){
               if(Rotateflag==0)
                 {
                   Rotateflag=1; 
                 }
-              if(alignCounter>=1){
-                if(Rotateflag==-1)
-                {
-                  if(LoadFlag==0)
-                  LoadBot();
-                }
-              }
-              if(alignCounter>=2)
+              if(Rotateflag==-1 && cyclecomplete==0)
+                 {
+                          if(LoadFlag==0)
+                          LoadBot();
+                          //wait for loading
+                  }
+              
+              
+//              if(alignCounter>=2){
+//                if(Rotateflag==-1)
+//                {
+//                  //alignCounter=0;
+//                  if(LoadFlag==0)
+//                  LoadBot();
+//                }
+//              }
+              if(alignCounter1>=2)
               {
-                        alignCounter=0;
+                        alignCounter1=0;
                         //calcRPM(0,0,0,pwheel);
                         if(Rotateflag==-2)
                         {
-                        
                         Rotateflag=2;
                         Throwcomplete=1;
                         }
-                        if(Rotateflag==0)
-                        {
-                          Rotateflag=1;
-                        }
-                        if(Rotateflag==-1&&cyclecomplete==0)
-                        {
-                          if(LoadFlag==0)
-                          LoadBot();
-                          //else
-                          //wait for loading
-                          // Rotateflag=-1;
-                        }
-                        if(Rotateflag==-1&&cyclecomplete==1&&ThrowLocation<=5)
+                        //if(Rotateflag==0)Rotateflag=1;
+                        if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5)
                         {
                           NextThrowCycle(ThrowLocation);
                           ThrowLocation++;
-                          //else
                           //wait for loading
-                          // Rotateflag=-1;
                         }
               }
             }
@@ -503,9 +488,7 @@ void loop(){
           if(Dirchange==1){
                     if(abs(GetLSAReading(LSAArray[dir]->OePin))<=30){
                       ActiveLineSensor=dir;
-                      ActiveOmegaSensor = rdir;
-                      
-                      LSAbackwardprev=0;
+                      ActiveOmegaSensor = rdir;        
                       LSAforwardprev=0;
                       PerpendicularLineSensor= pdir;
                       Dirchange=0;
