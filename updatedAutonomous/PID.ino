@@ -13,18 +13,19 @@ void PIDinit(float kp, float kd, float ki,float required,float minControl, float
     gain->integralError=0;
   }
 
-  int PID(float current, volatile struct gain * gain) {
+int PID(float current, volatile struct gain * gain) {
     gain->error = gain->required - current; 
-    gain->integralError += gain->error;
-    gain->derivativeError = gain->previousError - gain->error; 
+    gain->derivativeError = gain->error - gain->previousError; 
     gain->previousError = gain->error;
 
     float control = gain->kp * gain->error + gain->ki * gain->integralError + gain->kd * gain->derivativeError;
-
+    
     if (control > gain->maxControl)
       control = gain->maxControl;
-    if (control < gain->minControl)
+    else if (control < gain->minControl)
       control = gain->minControl;
+    else 
+       gain->integralError += gain->error;   
     return control;
-  }
+}
 

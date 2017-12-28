@@ -126,6 +126,8 @@ typedef struct LSA08{
 }LSA;
 float LSAforwardprev;
 float LSAbackwardprev;
+int LSArotateprev;
+
 LSA LSAf={0x01,270,51,0,53},LSAr={0x02,180,47,0,49},LSAl={0x03,0,41,0,43}, LSAb={0x04,90,37,0,39},*LSAArray[4]={&LSAf,&LSAr,&LSAl,&LSAb};
 //LSA LSAf={0x01,90,51,0,53},LSAr={0x02,0,47,0,49},LSAl={0x03,180,18,0,39},*LSAArray[3]={&LSAf,&LSAr,&LSAl};
 const byte rx = 17;    // Defining pin 0 as Rx
@@ -205,7 +207,10 @@ const int pinba = 31;
 const int pinbb = 33;
 const int pinca = 23;
 const int pincb = 25;
-const int alignrpm=130;
+const int alignrpm=150;
+const int DAC_PinTZ2=11;
+const int DAC_PinTZ3=13;
+const int ThrowPin=12;
 const float HeadTheta=54.2;
 int rpmmax=RPMMAX;
 //*****************************************************************
@@ -256,8 +261,9 @@ typedef struct encoder{
 //************************************************************************************
 LSM303::vector<int16_t> running_min = {32767, 32767, 32767}, running_max = {-32768, -32768, -32768};
 int pos[2];
-volatile struct gain Linegain[4], Omegagain, Aligngain, Aligngainperp,Aligngain1, Aligngainperp1;
+volatile struct gain Linegain[4], Omegagain, Aligngain, Aligngainperp,Aligngain1, Aligngainperp1,Rotategain;
 volatile struct gain *pLinegain[] = {&Linegain[0],&Linegain[1],&Linegain[2], &Linegain[3]}, *pOmegagain = &Omegagain, *pAligngain = &Aligngain, *pAligngainperp = &Aligngainperp,*pAligngain1 = &Aligngain1, *pAligngainperp1 = &Aligngainperp1;
+volatile struct gain *pRotategain=&Rotategain;
 const float rad = 1;
 const float pi = 3.14159;
 volatile int Stopflag = 0, Linearflag = 0;
@@ -271,7 +277,9 @@ volatile enum activeLSA dir,rdir, pdir, rpdir;
 volatile int posindex=0;
 volatile int ActiveLineSensor, ActiveOmegaSensor, PerpendicularLineSensor;
 volatile int junctionPassed=0;
-#define REDBOXSetup 1
+
+
+#define REDBOXSetup 0 
 //DRIVING VARIABLES AND FLAGS
 int alignedFlag=0;
 int yawdeg;
@@ -300,21 +308,28 @@ void setup() {
   interrupts();
   Serial.println("Starting code!");
   delay(1000);
+  
   initLSA(9600,LSAArray[0]->OePin);            //const int minControl = -255;      const int maxControl = 255;
   initLSA(9600,LSAArray[1]->OePin);
   initLSA(9600,LSAArray[2]->OePin);
   initLSA(9600,LSAArray[3]->OePin);
   
-  PIDinit(0.3,0.0,0,0,-255,255,pLinegain[0]);
-  PIDinit(0.7,0.0,0,0,-255,255,pLinegain[1]);
-  PIDinit(0.7,0.0,0,0,-255,255,pLinegain[2]);
-  PIDinit(0.3,0.0,0,0,-255,255,pLinegain[3]);
+  PIDinit(0.3,0.5,0,0,-255,255,pLinegain[0]);
+  PIDinit(0.7,2.0,0,0,-255,255,pLinegain[1]);
+  PIDinit(0.7,2.0,0,0,-255,255,pLinegain[2]);
+  PIDinit(0.4,0.5,0,0,-255,255,pLinegain[3]);
   
-  PIDinit(0.5,0.0,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
-  PIDinit(0.8,0.0,0,0,-22,22,pAligngain);
-  PIDinit(0.8,0.0,0,0,-22,22,pAligngainperp);
-  PIDinit(0.65,0.1,0,0,-22,22,pAligngain1);
-  PIDinit(0.65,0.1,0,0,-22,22,pAligngainperp1);
+  PIDinit(0.4,0.0,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
+  PIDinit(0.6,0.5,0,0,-35,35,pAligngain);
+  PIDinit(0.9,1.0 ,0,0,-35,35,pAligngainperp);
+  PIDinit(0.9,1.0,0,0,-22,22,pAligngain1);
+  PIDinit(0.6,0.5,0,0,-22,22,pAligngainperp1);
+  PIDinit(3,30,0,0,-120,120,pRotategain);
+//  PIDinit(0.4,0.5,0,0,-35,35,pAligngain);
+//  PIDinit(0.7,1.0 ,0,0,-35,35,pAligngainperp);
+//  PIDinit(0.7,1.0,0,0,-22,22,pAligngain1);
+//  PIDinit(0.4,0.5,0,0,-22,22,pAligngainperp1);
+//  
   //clearJunction(LSAArray[0]->Address);
   
   pinMode(LSAArray[0]->JunctionPin,INPUT);
@@ -340,9 +355,7 @@ void setup() {
 //    count++;
 //   }
 //  }
-  ActiveLineSensor=0;
-  ActiveOmegaSensor=3;
-  PerpendicularLineSensor=r;
+
   
   pos[0]=0;
   pos[1]=1;
@@ -352,6 +365,8 @@ void setup() {
   Stopflag=0;
   ActiveLineSensor=dir;
   ActiveOmegaSensor=rdir;
+  PerpendicularLineSensor= pdir;
+  
   if(REDBOXSetup){
     while(abs(GetLSAReading(LSAArray[r]->OePin))>25){
     Serial.println("Setup2");
@@ -372,14 +387,7 @@ void setup() {
 }
 
 void loop(){
-  
-//Serial.println("data:"+String(Stopflag)+" "+String(ActiveLineSensor));
-//      if(Throwcomplete==1){
-//            Throwcomplete=0;
-//            pos[0]=pos[1];
-//            pos[1]=2;
-//      }
-      transmit = false;
+        transmit = false;
       if(Stopflag==0){
           if(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin))
             {
@@ -405,8 +413,7 @@ void loop(){
               }
            }
           else{
-             Linecontrol=LineControl(LSAArray[ActiveLineSensor]->OePin,22
-             ,35,pLinegain[ActiveLineSensor]);
+             Linecontrol=LineControl(LSAArray[ActiveLineSensor]->OePin,15,35,pLinegain[ActiveLineSensor]);
              if(!(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
              Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
              }
@@ -428,20 +435,22 @@ void loop(){
             }
           else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==2)
           {//set align flag 0 before AND afterrotate 1 
-            RotateBot(0,20);
-            ToleranceOfAlignment=8;
+            //RotateBot(0,20);
+            RotateBot1(0,5);
+            ToleranceOfAlignment=5;
             Rotateflag=-1;
           }
           else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==1)
           {//set align flag 0 before AND afterrotate 1 
-            RotateBot(1,20);
-            ToleranceOfAlignment=3;
+            //RotateBot(1,20);
+            RotateBot1(1,5);
+            ToleranceOfAlignment=1;
             Rotateflag=-2;
           }
           else if(arr[pos[0]][pos[1]][posindex]==4 && alignedFlag==1)
             {
               //ActiveLineSensor;
-              alignCounter1+=alignBot(ToleranceOfAlignment);
+              alignCounter1+=alignBot1(ActiveLineSensor,ToleranceOfAlignment);
               //if(pos[1]!=1){
               if(Rotateflag==0)
                 {
@@ -471,7 +480,7 @@ void loop(){
                         {
                         Rotateflag=2;
                         Throwcomplete=1;
-                        }
+                        } 
                         //if(Rotateflag==0)Rotateflag=1;
                         if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5)
                         {
