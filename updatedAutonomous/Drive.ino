@@ -9,6 +9,15 @@ void initDriving(wheel ** whee){
   for(int i = 0; i<3; i++)
   initMotor(whee[i]);
 }
+void initMechanism(){
+  pinMode(ThrowPin,OUTPUT);
+  digitalWrite(ThrowPin,HIGH);
+  pinMode(DAC_PinTZ2,OUTPUT);
+  digitalWrite(DAC_PinTZ2,HIGH);
+  pinMode(DAC_PinTZ3,OUTPUT);
+  digitalWrite(DAC_PinTZ3,HIGH);
+  
+  }
 
 float setMotion(int omega, int angle, int transvel, wheel * whee) { 
     

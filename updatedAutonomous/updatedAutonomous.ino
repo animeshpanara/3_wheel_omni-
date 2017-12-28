@@ -207,10 +207,10 @@ const int pinba = 31;
 const int pinbb = 33;
 const int pinca = 23;
 const int pincb = 25;
-const int alignrpm=150;
-const int DAC_PinTZ2=11;
-const int DAC_PinTZ3=13;
-const int ThrowPin=12;
+const int alignrpm=170;
+const int DAC_PinTZ2 = 11;
+const int DAC_PinTZ3 = 13;
+const int ThrowPin = 12;
 const float HeadTheta=54.2;
 int rpmmax=RPMMAX;
 //*****************************************************************
@@ -279,7 +279,7 @@ volatile int ActiveLineSensor, ActiveOmegaSensor, PerpendicularLineSensor;
 volatile int junctionPassed=0;
 
 
-#define REDBOXSetup 0 
+#define REDBOXSetup 1 
 //DRIVING VARIABLES AND FLAGS
 int alignedFlag=0;
 int yawdeg;
@@ -314,10 +314,10 @@ void setup() {
   initLSA(9600,LSAArray[2]->OePin);
   initLSA(9600,LSAArray[3]->OePin);
   
-  PIDinit(0.3,0.5,0,0,-255,255,pLinegain[0]);
+  PIDinit(0.35,0.0,0,0,-255,255,pLinegain[0]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[1]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[2]);
-  PIDinit(0.4,0.5,0,0,-255,255,pLinegain[3]);
+  PIDinit(0.5,0.0,0,0,-255,255,pLinegain[3]);
   
   PIDinit(0.4,0.0,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
   PIDinit(0.6,0.5,0,0,-35,35,pAligngain);
@@ -336,7 +336,7 @@ void setup() {
   pinMode(LSAArray[1]->JunctionPin,INPUT);
   pinMode(LSAArray[2]->JunctionPin,INPUT);
   pinMode(LSAArray[3]->JunctionPin,INPUT);
-  
+  initMechanism();
 //  attachInterrupt(digitalPinToInterrupt(LSAArray[0]->JunctionPin),updateJunction,RISING);
 //  attachInterrupt(digitalPinToInterrupt(LSAArray[1]->JunctionPin),updateJunction,RISING);
 //  attachInterrupt(digitalPinToInterrupt(LSAArray[2]->JunctionPin),updateJunction,RISING);
@@ -387,6 +387,7 @@ void setup() {
 }
 
 void loop(){
+  
         transmit = false;
       if(Stopflag==0){
           if(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin))
@@ -460,6 +461,8 @@ void loop(){
                  {
                           if(LoadFlag==0)
                           LoadBot();
+                          cyclecomplete=1;
+                         // delay(3000);
                           //wait for loading
                   }
               
@@ -478,12 +481,16 @@ void loop(){
                         //calcRPM(0,0,0,pwheel);
                         if(Rotateflag==-2)
                         {
-                        Rotateflag=2;
+                        Rotateflag=2
+                        ;
+                        //throw here
+                        ThrowShuttleCock();
                         Throwcomplete=1;
                         } 
                         //if(Rotateflag==0)Rotateflag=1;
                         if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5)
                         {
+                          delay(5000);
                           NextThrowCycle(ThrowLocation);
                           ThrowLocation++;
                           //wait for loading

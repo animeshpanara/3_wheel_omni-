@@ -4,7 +4,7 @@ int alignBot(int alignTolerance)
    float alignControlPerpendicular=LineControl(LSAArray[r]->OePin,40,36,pAligngainperp);
    int theta = (((int)ToDeg((atan2(-alignControlPerpendicular,-alignControlActive)))+90));
    theta = (theta +LSAArray[b]->Theta)%360;
-   float speed1 = (float)sqrt(pow(alignControlActive,2)+pow(alignControlPerpendicular,2))/(25*1.414);
+   float speed1 = (float)sqrt(pow(alignControlActive,2)+pow(alignControlPerpendicular,2))/(40*1.414);
    calcRPM(-Omegacontrol,theta,speed1*alignrpm,pwheel);              
    if(abs(alignControlActive)<alignTolerance && abs(alignControlPerpendicular)<alignTolerance)
       alignCounter++;
@@ -111,9 +111,23 @@ void LoadBot(){
   cyclecomplete=1;
 }
 void NextThrowCycle(int posx){
+  
   int LoadPos=2;
   pos[0]=pos[1];
   pos[1]=posx;
+  if(pos[1]==4){
+    digitalWrite(DAC_PinTZ2,LOW);
+    digitalWrite(DAC_PinTZ3,HIGH);
+  }
+  else if(pos[1]==5){
+    digitalWrite(DAC_PinTZ3,LOW);
+    digitalWrite(DAC_PinTZ2,HIGH);
+  }
+  else
+  {
+    digitalWrite(DAC_PinTZ2,HIGH);
+    digitalWrite(DAC_PinTZ2,HIGH);
+  }
   posindex=0;
   dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex]; 
   rdir = (enum activeLSA)abs((int)dir-3);
@@ -181,5 +195,11 @@ float RotateControl(int Serialforward , volatile gain *pgain)
     return rotatecontrol;
 }
 
+void ThrowShuttleCock(){
 
-
+                        delay(1000);
+                        digitalWrite(ThrowPin,LOW);
+                        delay(1000);
+                        digitalWrite(ThrowPin,HIGH );
+                        delay(1000);
+}
