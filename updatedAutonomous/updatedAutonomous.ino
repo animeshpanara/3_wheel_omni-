@@ -29,7 +29,6 @@
 const int omegaMode=1;
 LSM303 compass;
 
-void TicksA();
 //The following code is for setting up IMU constants
 //**********************************************************************
 #define Gyro_Gain_X 0.07 //X axis Gyro gain
@@ -197,7 +196,7 @@ typedef struct wheels {
 const int anglea = 90;
 const int angleb = 210;
 const int anglec = 330;
-const int RPMMAX = 300;
+const int RPMMAX = 350;
 const int pinpwma = 7;
 const int pinpwmb = 8;
 const int pinpwmc = 6;
@@ -207,12 +206,14 @@ const int pinba = 31;
 const int pinbb = 33;
 const int pinca = 23;
 const int pincb = 25;
-const int alignrpm=170;
+const int alignrpm=210;
 const int DAC_PinTZ2 = 11;
 const int DAC_PinTZ3 = 13;
 const int ThrowPin = 12;
 const float HeadTheta=54.2;
 int rpmmax=RPMMAX;
+int timerStart = 1, alignTime;
+
 //*****************************************************************
 
 
@@ -261,9 +262,9 @@ typedef struct encoder{
 //************************************************************************************
 LSM303::vector<int16_t> running_min = {32767, 32767, 32767}, running_max = {-32768, -32768, -32768};
 int pos[2];
-volatile struct gain Linegain[4], Omegagain, Aligngain, Aligngainperp,Aligngain1, Aligngainperp1,Rotategain;
+volatile struct gain Linegain[4], Omegagain, Aligngain, Aligngainperp,Aligngain1, Aligngainperp1,Rotategain,AlignOmegagain;
 volatile struct gain *pLinegain[] = {&Linegain[0],&Linegain[1],&Linegain[2], &Linegain[3]}, *pOmegagain = &Omegagain, *pAligngain = &Aligngain, *pAligngainperp = &Aligngainperp,*pAligngain1 = &Aligngain1, *pAligngainperp1 = &Aligngainperp1;
-volatile struct gain *pRotategain=&Rotategain;
+volatile struct gain *pRotategain=&Rotategain, *pAlignOmegagain = &AlignOmegagain;
 const float rad = 1;
 const float pi = 3.14159;
 volatile int Stopflag = 0, Linearflag = 0;
@@ -279,7 +280,7 @@ volatile int ActiveLineSensor, ActiveOmegaSensor, PerpendicularLineSensor;
 volatile int junctionPassed=0;
 
 
-#define REDBOXSetup 1 
+#define REDBOXSetup 1
 //DRIVING VARIABLES AND FLAGS
 int alignedFlag=0;
 int yawdeg;
@@ -287,7 +288,7 @@ volatile int cnttt=0;
 float Linecontrol=0, Omegacontrol=0; 
 bool Dirchange=0;
 int Rotateflag=-1;
-int ToleranceOfAlignment=10;
+float ToleranceOfAlignment=8;
 bool Throwcomplete=0;
 bool LoadFlag=0;
 int alignCounter=0;
@@ -318,12 +319,12 @@ void setup() {
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[1]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[2]);
   PIDinit(0.5,0.0,0,0,-255,255,pLinegain[3]);
-  
+  PIDinit(0.8,0.0,0,0,-rpmmax,rpmmax,pAlignOmegagain);//Kp=0.67,Kd=0.7,Ki=0
   PIDinit(0.4,0.0,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
-  PIDinit(0.6,0.5,0,0,-35,35,pAligngain);
-  PIDinit(0.9,1.0 ,0,0,-35,35,pAligngainperp);
-  PIDinit(0.9,1.0,0,0,-22,22,pAligngain1);
-  PIDinit(0.6,0.5,0,0,-22,22,pAligngainperp1);
+  PIDinit(0.6,0.6,0.01,0,-35,35,pAligngain);
+  PIDinit(0.9,1.1,0.02,0,-35,35,pAligngainperp);
+  PIDinit(0.9,1.1,0.02,0,-35,35,pAligngain1);
+  PIDinit(0.6,0.6,0.01,0,-35,35,pAligngainperp1);
   PIDinit(3,30,0,0,-120,120,pRotategain);
 //  PIDinit(0.4,0.5,0,0,-35,35,pAligngain);
 //  PIDinit(0.7,1.0 ,0,0,-35,35,pAligngainperp);
@@ -438,21 +439,23 @@ void loop(){
           {//set align flag 0 before AND afterrotate 1 
             //RotateBot(0,20);
             RotateBot1(0,5);
-            ToleranceOfAlignment=5;
+            ToleranceOfAlignment=5 ;
             Rotateflag=-1;
           }
           else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==1)
           {//set align flag 0 before AND afterrotate 1 
             //RotateBot(1,20);
             RotateBot1(1,5);
-            ToleranceOfAlignment=1;
+            ToleranceOfAlignment=6;
             Rotateflag=-2;
           }
           else if(arr[pos[0]][pos[1]][posindex]==4 && alignedFlag==1)
             {
               //ActiveLineSensor;
-              alignCounter1+=alignBot1(ActiveLineSensor,ToleranceOfAlignment);
+              //alignCounter1+=alignBot(5,10);
+              alignCounter1+=alignBot1(ActiveLineSensor,ToleranceOfAlignment); 
               //if(pos[1]!=1){
+              
               if(Rotateflag==0)
                 {
                   Rotateflag=1; 
@@ -463,8 +466,8 @@ void loop(){
                           LoadBot();
                           cyclecomplete=1;
                          // delay(3000);
-                          //wait for loading
-                  }
+                          //delay after throw moving towards loading
+                 }
               
               
 //              if(alignCounter>=2){
@@ -475,14 +478,14 @@ void loop(){
 //                  LoadBot();
 //                }
 //              }
+
               if(alignCounter1>=2)
               {
                         alignCounter1=0;
                         //calcRPM(0,0,0,pwheel);
                         if(Rotateflag==-2)
                         {
-                        Rotateflag=2
-                        ;
+                        Rotateflag=2;
                         //throw here
                         ThrowShuttleCock();
                         Throwcomplete=1;
@@ -490,8 +493,8 @@ void loop(){
                         //if(Rotateflag==0)Rotateflag=1;
                         if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5)
                         {
-                          delay(5000);
                           NextThrowCycle(ThrowLocation);
+                          delay(5000);
                           ThrowLocation++;
                           //wait for loading
                         }

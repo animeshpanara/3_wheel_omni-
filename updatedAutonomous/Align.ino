@@ -1,12 +1,13 @@
-int alignBot(int alignTolerance)
+int alignBot(int alignToleranceOmega, int alignTolerancePerp)
 {
-   float alignControlActive=LineControl(LSAArray[b]->OePin,40,36,pAligngain);
-   float alignControlPerpendicular=LineControl(LSAArray[r]->OePin,40,36,pAligngainperp);
+   float alignControlActive=LineControl(LSAArray[f]->OePin,40,36,pAligngain);
+   float alignControlPerpendicular=LineControl(LSAArray[l]->OePin,40,36,pAligngainperp);
+   float alignOmegaControl = OmegaControl(LSAArray[f]->OePin,LSAArray[b]->OePin,40,pAlignOmegagain);
    int theta = (((int)ToDeg((atan2(-alignControlPerpendicular,-alignControlActive)))+90));
-   theta = (theta +LSAArray[b]->Theta)%360;
+   theta = (theta +LSAArray[f]->Theta)%360;
    float speed1 = (float)sqrt(pow(alignControlActive,2)+pow(alignControlPerpendicular,2))/(40*1.414);
-   calcRPM(-Omegacontrol,theta,speed1*alignrpm,pwheel);              
-   if(abs(alignControlActive)<alignTolerance && abs(alignControlPerpendicular)<alignTolerance)
+   calcRPM(-alignOmegaControl,theta,speed1*alignrpm,pwheel);              
+   if(abs(GetLSAReading(LSAArray[f]->OePin))<alignToleranceOmega && abs(GetLSAReading(LSAArray[l]->OePin))<alignTolerancePerp)
       alignCounter++;
    else
       alignCounter = 0;   
@@ -16,8 +17,7 @@ int alignBot(int alignTolerance)
    else
       return 0;
 }
-
-bool alignBot1(int x,int Tolerance)
+bool alignBot1(int x,float Tolerance)
 {
    
    int Yaxis,Xaxis,Xaxis1,Yaxis1;
@@ -43,61 +43,93 @@ bool alignBot1(int x,int Tolerance)
           Xaxis1=2;
           break;
    }
-//   if(abs(GetLSAReading(LSAArray[f]->OePin))<Tolerance&&abs(GetLSAReading(LSAArray[l]->OePin))<Tolerance)
+//   if(timerStart)
 //   {
-//    Serial.println("::::ALIGNED::::"); 
-//    return 1;
-   //}
-   //else
-   //{
-   float AlignControlActive=LineControl(LSAArray[Yaxis]->OePin,25,35,pAligngain);
-   float AlignControlPerpendicular=LineControl(LSAArray[Xaxis]->OePin,25,35,pAligngainperp);
-   float AlignControlActive1=LineControl(LSAArray[Yaxis1]->OePin,25,35,pAligngain1);
-   float AlignControlPerpendicular1=LineControl(LSAArray[Xaxis1]->OePin,25,35,pAligngainperp1);
+//      alignTime = millis();
+//      timerStart=0;
+//   }  
+   int maxBounds=40;
+   float AlignControlActive=LineControl(LSAArray[Yaxis]->OePin,maxBounds,35,pAligngain);
+   float AlignControlPerpendicular=LineControl(LSAArray[Xaxis]->OePin,maxBounds,35,pAligngainperp);
+   float AlignControlActive1=LineControl(LSAArray[Yaxis1]->OePin,maxBounds,35,pAligngain1);
+   float AlignControlPerpendicular1=LineControl(LSAArray[Xaxis1]->OePin,maxBounds,35,pAligngainperp1);
    
-   int theta = (((int)ToDeg((atan2(-AlignControlPerpendicular+AlignControlPerpendicular1/2.0,-AlignControlActive+AlignControlActive1/2.0))) +90));
-   theta = (theta +LSAArray[Yaxis]->Theta)%360;
-   float speed1 = (float)sqrt(pow(AlignControlActive,2)+pow(AlignControlPerpendicular,2))/(25*1.414);
-   calcRPM(-Omegacontrol,theta,speed1*alignrpm,pwheel);              
-   Serial.println("Theta "+String(theta)+"Speed "+String(speed1)+"Perp " + String(AlignControlPerpendicular)+ "Active "+String(AlignControlActive));
-   //return 0;
-   //}
-   if(abs(AlignControlActive)<Tolerance && abs(AlignControlPerpendicular)<Tolerance)
-      alignCounter++;
+   float alignOmegaControl = OmegaControl(LSAArray[f]->OePin,LSAArray[b]->OePin,2*maxBounds,pAlignOmegagain);
+   int theta;
+   float speed1,speed2,speed3;
+   if(abs(AlignControlActive)==maxBounds && abs(AlignControlActive1)==maxBounds && AlignControlActive==AlignControlActive1||abs(AlignControlPerpendicular)==maxBounds && abs(AlignControlPerpendicular1)==maxBounds && AlignControlPerpendicular==AlignControlPerpendicular1)
+    {
+        theta = ((int)ToDeg((atan2(-AlignControlPerpendicular,-AlignControlActive))) +90);
+        speed1 = (float)sqrt(pow(AlignControlActive,2)+pow(AlignControlPerpendicular,2))/(maxBounds*1.414);
+        speed3 = speed1;
+    }
    else
-      alignCounter = 0;   
+    {
+        theta = (((int)ToDeg((atan2(-AlignControlPerpendicular+AlignControlPerpendicular1/2.0,-AlignControlActive+AlignControlActive1/2.0))) +90));
+        speed1 = (float)sqrt(pow(AlignControlActive,2)+pow(AlignControlPerpendicular,2))/(maxBounds*1.414);
+        speed2 = (float)sqrt(pow(AlignControlActive1,2)+pow(AlignControlPerpendicular1,2))/(maxBounds*1.414);
+        speed3 = (speed1+speed2)/2;
+    }
+    
+   theta = (theta +LSAArray[Yaxis]->Theta)%360;
+   calcRPM(-alignOmegaControl,theta,speed3*alignrpm,pwheel);   
+              
+   Serial.println("Theta "+String(theta)+"Speed "+String(speed3)+"Perp " + String(AlignControlPerpendicular)+ "Active "+String(AlignControlActive));
+  //if(abs(AlignControlActive)<Tolerance && abs(AlignControlPerpendicular)<Tolerance)
+   if(abs(GetLSAReading(LSAArray[f]->OePin))<Tolerance && abs(GetLSAReading(LSAArray[l]->OePin))<Tolerance && abs(GetLSAReading(LSAArray[r]->OePin))<(Tolerance+5) && abs(GetLSAReading(LSAArray[l]->OePin))<(Tolerance+5))    
+      {
+        alignCounter++;
+      }
+   else
+      alignCounter = 0;
+   
+//   if((millis()-alignTime)>3000)
+//   {    
+//      timerStart=1;
+//      return 1; 
+//   }
+       
   // Serial.println("Theta "+String(theta)+"Speed "+String(speed1)+"Perp " + String(alignControlPerpendicular)+ "Active "+String(alignControlActive));
    if(alignCounter>10)
+   {
+      pAligngain->integralError=0;
+      pAligngain1->integralError=0;
+      pAligngainperp->integralError=0;
+      pAligngainperp1->integralError=0;
+      timerStart = 1;
       return 1;
+   }
    else
       return 0;
- }
+
+}
 void RotateBot(bool dir,int Tolerance)
 {
     while(abs(GetLSAReading(LSAArray[f]->OePin))<35&&abs(GetLSAReading(LSAArray[l]->OePin))<35)
     {
-    if(dir)
-      calcRPM(100,0,0,pwheel);              
-    else
-      calcRPM(-100,0,0,pwheel);              
-    TransmitRPM(pwheel);
-    }
+      if(dir)
+        calcRPM(100,0,0,pwheel);              
+      else
+        calcRPM(-100,0,0,pwheel);              
+      TransmitRPM(pwheel);
+    } 
    while((abs(GetLSAReading(LSAArray[f]->OePin))>Tolerance||abs(GetLSAReading(LSAArray[l]->OePin))>Tolerance))
    {
-    if(dir)
-    calcRPM(100,0,0,pwheel);              
-    else
-    calcRPM(-100,0,0,pwheel);              
-    TransmitRPM(pwheel);
-    Serial.println("Rotating by Dir: "+String(dir));
+      if(dir)
+        calcRPM(100,0,0,pwheel);              
+      else
+        calcRPM(-100,0,0,pwheel);              
+      TransmitRPM(pwheel);
+      Serial.println("Rotating by Dir: "+String(dir));
    }
 }
+
 void LoadBot(){
   int LoadPos;
   if(pos[1]==3)
-  LoadPos=1;
+      LoadPos=1;
   else
-  LoadPos=2;
+      LoadPos=2;
   pos[0]=pos[1];
   pos[1]=LoadPos;
   posindex=0;
@@ -110,6 +142,7 @@ void LoadBot(){
   alignedFlag=0;
   cyclecomplete=1;
 }
+
 void NextThrowCycle(int posx){
   
   int LoadPos=2;
@@ -137,7 +170,7 @@ void NextThrowCycle(int posx){
   alignedFlag=0;
   Dirchange=0;
   Rotateflag=0;
-  ToleranceOfAlignment=12;
+  ToleranceOfAlignment=10;
   Throwcomplete=0;
   LoadFlag=0;
   alignCounter=0;
@@ -169,8 +202,9 @@ bool RotateBot1(bool dir,int Tolerance)
       TransmitRPM(pwheel);
       Serial.println("Rotating by Dir: "+String(rotateControl));
    }
+   
    Serial.println("Exiting");
-   calcRPM(0,0,0,pwheel);
+      calcRPM(0,0,0,pwheel);
       TransmitRPM(pwheel);
    return true;
 }
@@ -200,6 +234,6 @@ void ThrowShuttleCock(){
                         delay(1000);
                         digitalWrite(ThrowPin,LOW);
                         delay(1000);
-                        digitalWrite(ThrowPin,HIGH );
+                        digitalWrite(ThrowPin,HIGH);
                         delay(1000);
 }
