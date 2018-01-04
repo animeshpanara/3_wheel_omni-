@@ -43,11 +43,11 @@ bool alignBot1(int x,float Tolerance)
           Xaxis1=2;
           break;
    }
-//   if(timerStart)
-//   {
-//      alignTime = millis();
-//      timerStart=0;
-//   }  
+   if(timerStart)
+   {
+      alignTime = millis();
+      timerStart=0;
+   }  
    int maxBounds=40;
    float AlignControlActive=LineControl(LSAArray[Yaxis]->OePin,maxBounds,35,pAligngain);
    float AlignControlPerpendicular=LineControl(LSAArray[Xaxis]->OePin,maxBounds,35,pAligngainperp);
@@ -83,11 +83,12 @@ bool alignBot1(int x,float Tolerance)
    else
       alignCounter = 0;
    
-//   if((millis()-alignTime)>3000)
-//   {    
-//      timerStart=1;
-//      return 1; 
-//   }
+   if((millis()-alignTime)>12000)
+   {    
+      timerStart=1;
+      calcRPM(0,0,0,pwheel);                  
+      return 1; 
+   }
        
   // Serial.println("Theta "+String(theta)+"Speed "+String(speed1)+"Perp " + String(alignControlPerpendicular)+ "Active "+String(alignControlActive));
    if(alignCounter>10)
@@ -97,6 +98,7 @@ bool alignBot1(int x,float Tolerance)
       pAligngainperp->integralError=0;
       pAligngainperp1->integralError=0;
       timerStart = 1;
+      calcRPM(0,0,0,pwheel);
       return 1;
    }
    else
@@ -122,6 +124,100 @@ void RotateBot(bool dir,int Tolerance)
       TransmitRPM(pwheel);
       Serial.println("Rotating by Dir: "+String(dir));
    }
+}
+
+//int rotateControl;
+
+bool RotateBot1(bool dir,int Tolerance)
+{
+  Serial.print("Entering");
+    while((abs(GetLSAReading(LSAArray[f]->OePin))<220))
+    {
+      Serial.println('a');
+      if(dir)
+        calcRPM(100,0,0,pwheel);              
+      else
+        calcRPM(-100,0,0,pwheel);              
+      TransmitRPM(pwheel);
+    }
+   if(dir)
+    LSArotateprev= -40;
+   else
+    LSArotateprev= 40;
+
+   int maxBounds=40;
+   int Yaxis,Xaxis,Xaxis1,Yaxis1;
+    
+   switch(ActiveLineSensor){
+   case 0:Yaxis=0;
+          Xaxis=2;
+          Yaxis1=3;
+          Xaxis1=1;
+          break;
+   case 1:Yaxis=2;
+          Xaxis=3;
+          Yaxis1=1;
+          Xaxis1=0;
+          break;
+   case 2:Yaxis=1;
+          Xaxis=0;
+          Yaxis1=2;
+          Xaxis1=3;
+          break;
+   case 3:Yaxis=3;
+          Xaxis=1;
+          Yaxis1=0;
+          Xaxis1=2;
+          break;
+   }
+    
+   while((abs(GetLSAReading(LSAArray[f]->OePin))>Tolerance))
+   {
+      int rotateControl = RotateControl(LSAArray[f]->OePin ,pRotategain);
+      calcRPM(rotateControl,0,0,pwheel);
+      TransmitRPM(pwheel);
+      Serial.println("Rotating by Dir: "+String(rotateControl));
+      //updation of prev error of 4 sensors
+      float AlignControlActive=LineControl(LSAArray[Yaxis]->OePin,maxBounds,35,pAligngain);
+      float AlignControlPerpendicular=LineControl(LSAArray[Xaxis]->OePin,maxBounds,35,pAligngainperp);
+      float AlignControlActive1=LineControl(LSAArray[Yaxis1]->OePin,maxBounds,35,pAligngain1);
+      float AlignControlPerpendicular1=LineControl(LSAArray[Xaxis1]->OePin,maxBounds,35,pAligngainperp1);
+   
+   }
+   
+   Serial.println("Exiting");
+      calcRPM(0,0,0,pwheel);
+      TransmitRPM(pwheel);
+   return true;
+}
+
+
+float RotateControl(int Serialforward , volatile gain *pgain)
+{
+   float LSArotate = -GetLSAReading(Serialforward);
+   int rotatecontrol;
+   
+   if(abs(LSArotate) < 36){
+    //do nothing
+    }
+    else{
+     LSArotate = (float)(LSArotateprev)*40/abs(LSArotateprev);
+    }
+    if(LSArotate<41)
+    rotatecontrol = PID(LSArotate, pgain);
+    
+    LSArotateprev = LSArotate;
+
+    return rotatecontrol;
+}
+
+void ThrowShuttleCock(){
+
+                        delay(1000);
+                        digitalWrite(ThrowPin,LOW);
+                        delay(1000);
+                        digitalWrite(ThrowPin,HIGH);
+                        delay(1000);
 }
 
 void LoadBot(){
@@ -176,64 +272,4 @@ void NextThrowCycle(int posx){
   alignCounter=0;
   cyclecomplete=0;
 }
-//int rotateControl;
 
-bool RotateBot1(bool dir,int Tolerance)
-{
-  Serial.print("Entering");
-    while((abs(GetLSAReading(LSAArray[f]->OePin))<220))
-    {
-      Serial.println('a');
-      if(dir)
-        calcRPM(100,0,0,pwheel);              
-      else
-        calcRPM(-100,0,0,pwheel);              
-      TransmitRPM(pwheel);
-    }
-   if(dir)
-    LSArotateprev= -40;
-   else
-    LSArotateprev= 40;
-    
-   while((abs(GetLSAReading(LSAArray[f]->OePin))>Tolerance))
-   {
-      int rotateControl = RotateControl(LSAArray[f]->OePin ,pRotategain);
-      calcRPM(rotateControl,0,0,pwheel);
-      TransmitRPM(pwheel);
-      Serial.println("Rotating by Dir: "+String(rotateControl));
-   }
-   
-   Serial.println("Exiting");
-      calcRPM(0,0,0,pwheel);
-      TransmitRPM(pwheel);
-   return true;
-}
-
-
-float RotateControl(int Serialforward , volatile gain *pgain)
-{
-   float LSArotate = -GetLSAReading(Serialforward);
-   int rotatecontrol;
-   
-   if(abs(LSArotate) < 36){
-    //do nothing
-    }
-    else{
-     LSArotate = (float)(LSArotateprev)*40/abs(LSArotateprev);
-    }
-    if(LSArotate<41)
-    rotatecontrol = PID(LSArotate, pgain);
-    
-    LSArotateprev = LSArotate;
-
-    return rotatecontrol;
-}
-
-void ThrowShuttleCock(){
-
-                        delay(1000);
-                        digitalWrite(ThrowPin,LOW);
-                        delay(1000);
-                        digitalWrite(ThrowPin,HIGH);
-                        delay(1000);
-}

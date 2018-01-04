@@ -212,7 +212,8 @@ const int DAC_PinTZ3 = 13;
 const int ThrowPin = 12;
 const float HeadTheta=54.2;
 int rpmmax=RPMMAX;
-int timerStart = 1, alignTime;
+int timerStart = 1;
+long int alignTime;
 
 //*****************************************************************
 
@@ -468,21 +469,10 @@ void loop(){
                          // delay(3000);
                           //delay after throw moving towards loading
                  }
-              
-              
-//              if(alignCounter>=2){
-//                if(Rotateflag==-1)
-//                {
-//                  //alignCounter=0;
-//                  if(LoadFlag==0)
-//                  LoadBot();
-//                }
-//              }
-
+                 
               if(alignCounter1>=2)
               {
                         alignCounter1=0;
-                        //calcRPM(0,0,0,pwheel);
                         if(Rotateflag==-2)
                         {
                         Rotateflag=2;
@@ -490,7 +480,6 @@ void loop(){
                         ThrowShuttleCock();
                         Throwcomplete=1;
                         } 
-                        //if(Rotateflag==0)Rotateflag=1;
                         if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5)
                         {
                           NextThrowCycle(ThrowLocation);
@@ -510,6 +499,8 @@ void loop(){
                       ActiveOmegaSensor = rdir;        
                       LSAforwardprev=0;
                       PerpendicularLineSensor= pdir;
+                      }
+                      if(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin)){
                       Dirchange=0;
                       rpmmax*=2;
                       }
