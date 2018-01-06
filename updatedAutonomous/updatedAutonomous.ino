@@ -38,7 +38,7 @@ char arr[6][6][15]={
                    {{b,b,l,l,s},{b,b,l,s},{b,b,s},{b,b,l,f,f,s},{s},{f,f,f,s}},
       
                    {{b,b,b,b,b,l,l,s},{b,b,b,b,b,l,s},{b,b,b,b,b,s},{b,b,b,b,b,l,f,f,s},{b,b,b,s},{s}}
-
+                    
                    };
 
 /*The following code is to set up driving constants/structs*/
@@ -82,7 +82,7 @@ const float pi = 3.1415;
 const int anglea = 90;
 const int angleb = 210;
 const int anglec = 330;
-const int RPMMAX = 350;
+const int RPMMAX = 300;
 const int pinpwma = 7;
 const int pinpwmb = 8;
 const int pinpwmc = 6;
@@ -96,7 +96,7 @@ const int alignrpm=210;
 const int DAC_PinTZ2 = 11;
 const int DAC_PinTZ3 = 13;
 const int ThrowPin = 12;
-const float HeadTheta=54.2;
+//const float HeadTheta=54.2;
 int rpmmax=RPMMAX;
 int timerStart = 1;
 long int alignTime;
@@ -140,16 +140,16 @@ void setup() {
   initLSA(9600,LSAArray[2]->OePin);
   initLSA(9600,LSAArray[3]->OePin);
   
-  PIDinit(0.35,0.0,0,0,-255,255,pLinegain[0]);
+  PIDinit(0.2,0.0,0,0,-255,255,pLinegain[0]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[1]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[2]);
   PIDinit(0.5,0.0,0,0,-255,255,pLinegain[3]);
   PIDinit(0.8,0.0,0,0,-rpmmax,rpmmax,pAlignOmegagain);//Kp=0.67,Kd=0.7,Ki=0
   PIDinit(0.4,0.0,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
-  PIDinit(0.6,0.6,0.01,0,-35,35,pAligngain);
-  PIDinit(0.9,1.1,0.02,0,-35,35,pAligngainperp);
-  PIDinit(0.9,1.1,0.02,0,-35,35,pAligngain1);
-  PIDinit(0.6,0.6,0.01,0,-35,35,pAligngainperp1);
+  PIDinit(0.6,0.6,0.005,0,-35,35,pAligngain);
+  PIDinit(0.9,1.1,0.01,0,-35,35,pAligngainperp);
+  PIDinit(0.9,1.1,0.01,0,-35,35,pAligngain1);
+  PIDinit(0.6,0.6,0.005,0,-35,35,pAligngainperp1);
   PIDinit(3,30,0,0,-120,120,pRotategain);
 
   pinMode(LSAArray[0]->JunctionPin,INPUT);
@@ -163,6 +163,8 @@ void setup() {
   clearJunction(LSAArray[2]->Address);
   clearJunction(LSAArray[3]->Address);
 
+  pos[0]=0;
+  pos[1]=1;
   dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex]; 
   rdir = (enum activeLSA)abs((int)dir-3);
   pdir = (enum activeLSA)(((int)dir+2)%4);   
@@ -189,7 +191,7 @@ void setup() {
   }
  // wdt_enable(WDTO_1S);
 }
-
+int checkbacksensor=1; 
 void loop(){
     transmit = false;
     if(Stopflag==0){
@@ -211,7 +213,7 @@ void loop(){
               else{
                 Dirchange=1;
                 rpmmax/=2; 
-              }      
+              }
             }
          }
         else{
@@ -219,9 +221,8 @@ void loop(){
            if(!(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
            Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
            }
-          Serial.println("LineControl:"+String(Linecontrol)+"OmegaControl:"+String(Omegacontrol));
+          //Serial.println("LineControl:"+String(Linecontrol)+"OmegaControl:"+String(Omegacontrol));
           if(arr[pos[0]][pos[1]][posindex]==4 && alignedFlag==0){
-            
                 if(abs(GetLSAReading(LSAArray[PerpendicularLineSensor]->OePin))<15){
                    for(int k =0;k<3;k++){
                      pwheel[k]->rpm=0;
@@ -233,11 +234,13 @@ void loop(){
                 }
           }
         else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==2){                                                                                       //set align flag 0 before AND afterrotate 1 
+          //RotateBot(0,5);
           RotateBot(0,5);
           ToleranceOfAlignment=5 ;
           Rotateflag=-1;
         }
         else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==1){                                                                                        //set align flag 0 before AND afterrotate 1 
+          //RotateBot(1,5);
           RotateBot(1,5);
           ToleranceOfAlignment=6;
           Rotateflag=-2;
@@ -250,8 +253,7 @@ void loop(){
            if(Rotateflag==-1 && cyclecomplete==0){
               if(LoadFlag==0)
               LoadBot();
-              cyclecomplete=1;
-             
+              //cyclecomplete=1; 
               //delay after throw moving towards loading
            }
                
@@ -278,17 +280,21 @@ void loop(){
         else if(arr[pos[0]][pos[1]][posindex]!=4)
           calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax,pwheel);
         if(Dirchange==1){
-          if(abs(GetLSAReading(LSAArray[dir]->OePin))<=30){
-              ActiveLineSensor=dir;
-              ActiveOmegaSensor = rdir;        
-              LSAforwardprev=0;
-              PerpendicularLineSensor= pdir;
-            }
-            if(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin)){
-              Dirchange=0;
-              rpmmax*=2;
-            }
-        }
+                    if(checkbacksensor){
+                        if(abs(GetLSAReading(LSAArray[dir]->OePin))<=30){
+                          ActiveLineSensor=dir;
+                          ActiveOmegaSensor = rdir;        
+                          //LSAforwardprev=0;
+                          PerpendicularLineSensor= pdir;
+                          checkbacksensor=0;
+                          }
+                      }
+                      if(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin)){
+                      Dirchange=0;
+                      rpmmax*=2;
+                      checkbacksensor=1;
+                      }
+          }
     }            
     else{
       Serial.println(" Stopped ");
@@ -297,12 +303,12 @@ void loop(){
       }
     }
     for(int l =0;l<3;l++){
-      Serial.println("Wheel"+String(l)+": "+pwheel[l]->rpm);
+      //Serial.println("Wheel"+String(l)+": "+pwheel[l]->rpm);
       if(pwheel[l]->prev_rpm!=pwheel[l]->rpm)
       transmit = true;
     }
     
-    if(true)
+    if(transmit)
     TransmitRPM(pwheel);
       
    //   wdt_reset();

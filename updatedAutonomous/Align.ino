@@ -27,10 +27,10 @@ bool alignBot(int x,float Tolerance){
           break;
    }
    
-   if(timerStart){
-    alignTime = millis();
-    timerStart=0;
-   }
+//   if(timerStart){
+//    alignTime = millis();
+//    timerStart=0;
+//   }
      
    int maxBounds=40;
    float AlignControlActive=LineControl(LSAArray[Yaxis]->OePin,maxBounds,35,pAligngain);
@@ -62,11 +62,15 @@ bool alignBot(int x,float Tolerance){
    else
      alignCounter = 0;
    
-   if((millis()-alignTime)>12000){    
-     timerStart=1;
-     calcRPM(0,0,0,pwheel);                  
-     return 1; 
-   }
+//   if((millis()-alignTime)>12000){    
+//     pAligngain->integralError=0;
+//     pAligngain1->integralError=0;
+//     pAligngainperp->integralError=0;
+//     pAligngainperp1->integralError=0;
+//     timerStart=1;
+//     calcRPM(0,0,0,pwheel);                  
+//     return 1; 
+//   }
   
    if(alignCounter>10){
      pAligngain->integralError=0;
@@ -132,7 +136,7 @@ bool RotateBot(bool dir,int Tolerance)
       int rotateControl = RotateControl(LSAArray[f]->OePin ,pRotategain);
       calcRPM(rotateControl,0,0,pwheel);
       TransmitRPM(pwheel);
-      Serial.println("Rotating by Dir: "+String(rotateControl));
+      //Serial.println("Rotating by Dir: "+String(rotateControl));
       //updation of prev error of 4 sensors
       float AlignControlActive=LineControl(LSAArray[Yaxis]->OePin,maxBounds,35,pAligngain);
       float AlignControlPerpendicular=LineControl(LSAArray[Xaxis]->OePin,maxBounds,35,pAligngainperp);
