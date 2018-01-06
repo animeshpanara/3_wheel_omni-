@@ -296,6 +296,7 @@ int alignCounter=0;
 int alignCounter1=0;
 int cyclecomplete=1;
 int ThrowLocation=3;
+int checkbacksensor=1;
 
 
 void setup() {
@@ -316,7 +317,7 @@ void setup() {
   initLSA(9600,LSAArray[2]->OePin);
   initLSA(9600,LSAArray[3]->OePin);
   
-  PIDinit(0.35,0.0,0,0,-255,255,pLinegain[0]);
+  PIDinit(0.25,0.0,0,0,-255,255,pLinegain[0]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[1]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[2]);
   PIDinit(0.5,0.0,0,0,-255,255,pLinegain[3]);
@@ -411,8 +412,7 @@ void loop(){
                 else{
                   Dirchange=1;
                   rpmmax/=2; 
-                }
-                    
+                }       
               }
            }
           else{
@@ -494,15 +494,19 @@ void loop(){
           else if(arr[pos[0]][pos[1]][posindex]!=4)
             calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax,pwheel);
           if(Dirchange==1){
-                    if(abs(GetLSAReading(LSAArray[dir]->OePin))<=30){
-                      ActiveLineSensor=dir;
-                      ActiveOmegaSensor = rdir;        
-                      LSAforwardprev=0;
-                      PerpendicularLineSensor= pdir;
+                    if(checkbacksensor){
+                        if(abs(GetLSAReading(LSAArray[dir]->OePin))<=30){
+                          ActiveLineSensor=dir;
+                          ActiveOmegaSensor = rdir;        
+                          //LSAforwardprev=0;
+                          PerpendicularLineSensor= pdir;
+                          checkbacksensor=0;
+                          }
                       }
                       if(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin)){
                       Dirchange=0;
                       rpmmax*=2;
+                      checkbacksensor=1;
                       }
                   }
       }            
