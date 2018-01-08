@@ -10,6 +10,8 @@ void LoadBot(){
    int LoadPos;
    if(pos[1]==3)
        LoadPos=1;
+   else if(pos[1]==5)
+       LoadPos=0;    
    else
        LoadPos=2;
    pos[0]=pos[1];
