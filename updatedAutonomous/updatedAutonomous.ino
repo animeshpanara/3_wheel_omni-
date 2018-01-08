@@ -102,7 +102,7 @@ float Linecontrol=0, Omegacontrol=0;
 bool Dirchange=0;
 int Rotateflag=-1;
 float ToleranceOfAlignment=8;
-bool Throwcomplete=0;
+bool Throwcomplete=1;
 bool LoadFlag=0;
 int alignCounter=0; 
 int alignCounter1=0;
@@ -277,10 +277,10 @@ void loop(){
               ThrowShuttleCock();
               Throwcomplete=1;
               } 
-              if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5)
+              if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5 && Throwcomplete==1)
               {
                 NextThrowCycle(ThrowLocation);
-                //delay(5000);
+                delay(5000);
                 ThrowLocation++;
                 //wait for loading
               }
