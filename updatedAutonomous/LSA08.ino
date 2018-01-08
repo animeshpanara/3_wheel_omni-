@@ -19,7 +19,7 @@ void initLSA(int baud,int OutputEnable){
 }
 
 
-void sendCommand(char command, char data, char address){
+void sendCommand(char command, char data, char address) {
   char checksum = address + command + data;  
   SerialLSA.write(address);
   SerialLSA.write(command);
@@ -27,7 +27,8 @@ void sendCommand(char command, char data, char address){
   SerialLSA.write(checksum);
 }
 
-void ChangeBaud(char baud, char add){
+void ChangeBaud(char baud, char add)
+{
   char command='R';
   char data;
   if(baud==9600) data=0;
@@ -39,7 +40,8 @@ void ChangeBaud(char baud, char add){
    sendCommand(command,data,add);
 }
 
-void clearJunction(char add) {
+void clearJunction(char add) 
+{
   char address = add;
   char command = 'X';
   char data = 0x00;
@@ -73,6 +75,7 @@ float GetLSAReading(byte OutputEnable){
 float GetThetaofLSA(byte OutputEnable){
    int LineReading = GetByteOfLSA(OutputEnable); 
    LineReading=35-LineReading;
+ //  Serial.println(LineReading); 
    float scaledReading = (float)LSAlength*LineReading/70;
    float theta = atan(scaledReading/LSAdistance);
    return theta;

@@ -1,4 +1,6 @@
-void PIDinit(float kp, float kd, float ki,float required,float minControl, float maxControl,struct gain * gain) {
+
+
+void PIDinit(float kp, float kd, float ki,float required,float minControl, float maxControl,volatile struct gain * gain) {
     gain->kp = kp;
     gain->kd = kd;
     gain->ki = ki;
@@ -9,9 +11,9 @@ void PIDinit(float kp, float kd, float ki,float required,float minControl, float
     gain->previousError=1;
     gain->derivativeError=0;
     gain->integralError=0;
-}
+  }
 
-int PID(float current, struct gain * gain) {
+int PID(float current, volatile struct gain * gain) {
     gain->error = gain->required - current; 
     gain->derivativeError = gain->error - gain->previousError; 
     gain->previousError = gain->error;

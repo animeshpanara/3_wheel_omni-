@@ -12,8 +12,7 @@ void TransmitRPM(wheel ** whee)
         }
   Wire.endTransmission();
  }
- 
-void TransmitRPM_STM(wheel ** whee)
+ void TransmitRPM_STM(wheel ** whee)
 {
   int y1=0;
   char str[9];
