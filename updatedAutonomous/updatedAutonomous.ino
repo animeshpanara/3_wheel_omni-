@@ -1,6 +1,6 @@
  //#include <TimerOne.h>
 #include <Wire.h>
-#define REDBOXSetup 0
+#define REDBOXSetup 1
 #define ToRad(x) ((x)*0.01745329252)  // *pi/180
 #define ToDeg(x) ((x)*57.2957795131)  // *180/pi
 #include <Adafruit_MCP4725.h>
@@ -305,14 +305,13 @@ void loop(){
                           //LSAforwardprev=0;
                           PerpendicularLineSensor= pdir;
                           //checkbacksensor=0;
-                           Dirchange=0;
-                           rpmmax*=3;
-                          }
+                            }
                       //}
-                      //if(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin)){
-                     
+                      if(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin)){
+                       Dirchange=0;
+                       rpmmax*=3;  
                       //checkbacksensor=1;
-                      //}
+                      }
           }
     }            
     else{

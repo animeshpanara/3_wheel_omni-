@@ -35,13 +35,13 @@ void NextThrowCycle(int posx){
     pos[0]=pos[1];
     pos[1]=posx;
     if(pos[1]==3){
-      DACcounter=512;
+      DACcounter=700;
       }
     else if(pos[1]==4){
-      DACcounter=712;
+      DACcounter=1000;
       }
     else if(pos[1]==5){
-      DACcounter=1100;
+      DACcounter=1300;
       }
    dac.setVoltage(DACcounter, false);  
    posindex=0;
