@@ -1,3 +1,7 @@
+void initUltraSonicSensor(){
+  pinMode (TriggerPin, INPUT); 
+  pinMode (EchoPin, INPUT);
+}
 
 void initThrowing(){
   pinMode(ThrowPin,OUTPUT);
