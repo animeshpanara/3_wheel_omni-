@@ -5,7 +5,6 @@ void ThrowShuttleCock(){
    digitalWrite(ThrowPin,LOW);
    delay(1000);
 }
-
 void chechIr(){
   while(1){
     if(!digitalRead(TriggerPin))
@@ -20,7 +19,6 @@ void chechIr(){
     }
   }
 }
-
 int CheckBall(){
   PiSerial.write('a');
   while(PiSerial.available()<=0);
@@ -60,13 +58,13 @@ void NextThrowCycle(int posx){
     pos[0]=pos[1];
     pos[1]=posx;
     if(pos[1]==3){
-      DACcounter=700;
+      DACcounter=645;
       }
     else if(pos[1]==4){
-      DACcounter=1000;
+      DACcounter=875;
       }
     else if(pos[1]==5){
-      DACcounter=1300;
+      DACcounter=1210;
       }
    dac.setVoltage(DACcounter, false);  
    posindex=0;
