@@ -1,5 +1,8 @@
 void ThrowShuttleCock(){
+   digitalWrite(EchoPin,HIGH);
    delay(1000);
+   digitalWrite(EchoPin,LOW);
+   delay(1000/2);
    digitalWrite(ThrowPin,HIGH);
    delay(1000);
    digitalWrite(ThrowPin,LOW);
