@@ -86,12 +86,13 @@ const float pi = 3.1415;
 const int anglea = 90;
 const int angleb = 210;
 const int anglec = 330;
-const int RPMMAX = 300;
+const int RPMMAX = 350;
 const int alignrpm=210;
 //const int DAC_PinTZ2 = 11;
 //const int DAC_PinTZ3 = 13;
 const int TriggerPin=9;
 const int EchoPin=8;
+const int ThrowLed=47; 
 //const int SpeedOfSound=340;
 const int ThrowPin = 43;
 //const float HeadTheta=54.2;
@@ -257,13 +258,11 @@ void loop(){
                 }
           }
         else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==2){                                                                                       //set align flag 0 before AND afterrotate 1 
-          //RotateBot(0,5);
           RotateBot(0,5);
           ToleranceOfAlignment=5 ;
           Rotateflag=-1;
         }
         else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==1){                                                                                        //set align flag 0 before AND afterrotate 1 
-          //RotateBot(1,5);
           RotateBot(1,5);
           ToleranceOfAlignment=6;
           Rotateflag=-2;
@@ -294,7 +293,7 @@ void loop(){
               if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5 && Throwcomplete==1)
               {
                 chechIr();
-                delay(2500);
+                delay(1500);
                 int location;
                 while(1){
                   location=CheckBall();
@@ -302,7 +301,7 @@ void loop(){
                   break;
                 }
                 NextThrowCycle(location);
-                delay(2000);
+                delay(1000);
                 //ThrowLocation++;
                 //wait for loading
               }

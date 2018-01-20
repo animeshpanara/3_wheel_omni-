@@ -62,7 +62,7 @@ bool alignBot(int x,float Tolerance){
    else
      alignCounter = 0;
    
-   if((millis()-alignTime)>12000){    
+   if((millis()-alignTime)>10000){    
      pAligngain->integralError=0;
      pAligngain1->integralError=0;
      pAligngainperp->integralError=0;

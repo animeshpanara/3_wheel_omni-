@@ -1,12 +1,12 @@
 void ThrowShuttleCock(){
-   digitalWrite(EchoPin,HIGH);
+   digitalWrite(ThrowLed,HIGH);
    delay(1000);
-   digitalWrite(EchoPin,LOW);
+   digitalWrite(ThrowLed,LOW);
    delay(1000/2);
    digitalWrite(ThrowPin,HIGH);
    delay(1000);
    digitalWrite(ThrowPin,LOW);
-   delay(1000);
+   //delay(1000);
 }
 void chechIr(){
   while(1){
@@ -38,8 +38,8 @@ void LoadBot(){
        LoadPos=1;
    else if(pos[1]==5){
        LoadPos=1;
-       DACcounter=0;
-       dac.setVoltage(DACcounter,false);         
+       //DACcounter=0;
+       //dac.setVoltage(DACcounter,false);         
    }    
    else
        LoadPos=2;
@@ -64,7 +64,7 @@ void NextThrowCycle(int posx){
       DACcounter=645;
       }
     else if(pos[1]==4){
-      DACcounter=875;
+      DACcounter=910;
       }
     else if(pos[1]==5){
       DACcounter=1210;
