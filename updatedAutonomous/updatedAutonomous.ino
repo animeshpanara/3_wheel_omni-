@@ -93,6 +93,7 @@ const int alignrpm=210;
 const int TriggerPin=9;
 const int EchoPin=8;
 const int ThrowLed=47; 
+const int CamLed=51;
 //const int SpeedOfSound=340;
 const int ThrowPin = 43;
 //const float HeadTheta=54.2;
@@ -292,14 +293,16 @@ void loop(){
               } 
               if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5 && Throwcomplete==1)
               {
+                digitalWrite(CamLed,HIGH);
                 chechIr();
-                delay(1500);
+                delay(1000);
                 int location;
                 while(1){
                   location=CheckBall();
                   if (location!=0)
                   break;
                 }
+                digitalWrite(CamLed,LOW);
                 NextThrowCycle(location);
                 delay(1000);
                 //ThrowLocation++;
