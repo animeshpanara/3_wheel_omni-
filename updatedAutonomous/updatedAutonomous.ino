@@ -97,6 +97,16 @@ const int CamLed=51;
 //const int SpeedOfSound=340;
 const int ThrowPin = 43;
 //const float HeadTheta=54.2;
+
+/*************************************   new_Mechanism    *********************************************************************************************/
+const int Motordir1pin=13;    
+const int Motordir2pin=11; //Himanshu
+const int PWMpin=12;
+const int LimitLpin=7;
+const int LimitRpin=5; 
+const int reloadLiftpin=53;
+/**********************************************************************************************************************************/
+
 int rpmmax=RPMMAX;
 int timerStart = 1;
 long int alignTime;
@@ -121,6 +131,7 @@ int cyclecomplete=1;
 int ThrowLocation=3;
 int pos[2];
 int Ircounter=0;
+
 void setup() {
   //wdt_disable();
   Serial.begin(9600);
@@ -143,12 +154,12 @@ void setup() {
   initLSA(9600,LSAArray[2]->OePin);
   initLSA(9600,LSAArray[3]->OePin);
   
-  PIDinit(0.4,0.0,0,0,-255,255,pLinegain[0]);
+  PIDinit(0.5,0.071,0,0,-255,255,pLinegain[0]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[1]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[2]);
   PIDinit(0.5,0.0,0,0,-255,255,pLinegain[3]);
   PIDinit(0.8,0.0,0,0,-rpmmax,rpmmax,pAlignOmegagain);//Kp=0.67,Kd=0.7,Ki=0
-  PIDinit(0.4,0.0,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
+  PIDinit(0.8,0.5,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
   PIDinit(0.6,0.6,0.01,0,-35,35,pAligngain);
   PIDinit(0.9,1.1,0.02,0,-35,35,pAligngainperp);
   PIDinit(0.9,1.1,0.02,0,-35,35,pAligngain1);
@@ -166,7 +177,8 @@ void setup() {
   digitalWrite(LSAArray[3]->JunctionPin,LOW);
   
   initThrowing();
-
+  initnewMech();
+  
   clearJunction(LSAArray[0]->Address);
   clearJunction(LSAArray[1]->Address);
   clearJunction(LSAArray[2]->Address);
@@ -288,14 +300,14 @@ void loop(){
               {
               Rotateflag=2;
               //throw here
-              ThrowShuttleCock();
+              ThrowShuttleCock(pos[1]);
               Throwcomplete=1;
               } 
               if(Rotateflag==-1 && cyclecomplete==1 && ThrowLocation<=5 && Throwcomplete==1)
               {
                 digitalWrite(CamLed,HIGH);
                 chechIr();
-                delay(1000);
+                //delay(1000);
                 int location;
                 while(1){
                   location=CheckBall();
@@ -304,8 +316,7 @@ void loop(){
                 }
                 digitalWrite(CamLed,LOW);
                 NextThrowCycle(location);
-                delay(1000);
-                //ThrowLocation++;
+                //delay(1000);
                 //wait for loading
               }
             }

@@ -68,7 +68,8 @@ bool alignBot(int x,float Tolerance){
      pAligngainperp->integralError=0;
      pAligngainperp1->integralError=0;
      timerStart=1;
-     calcRPM(0,0,0,pwheel);                  
+     calcRPM(0,0,0,pwheel); 
+     TransmitRPM(pwheel);                 
      return 1; 
    }
   
@@ -79,6 +80,7 @@ bool alignBot(int x,float Tolerance){
      pAligngainperp1->integralError=0;
      timerStart = 1;
      calcRPM(0,0,0,pwheel);
+     TransmitRPM(pwheel);
      return 1;
    }
    else
