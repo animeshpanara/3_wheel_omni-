@@ -8,7 +8,8 @@ void initnewMech(void)
   pinMode(LimitRpin,INPUT_PULLUP);
 }
 int newMech(){
-  int timerIr=0,TempIr=0;
+  long int timerIr=0;
+  int TempIr=0;
   analogWrite(PWMpin,70);
   while(digitalRead(LimitRpin)==HIGH){
   digitalWrite(Motordir1pin,LOW);

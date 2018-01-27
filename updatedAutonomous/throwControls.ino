@@ -14,8 +14,7 @@ void ThrowShuttleCock(int pos){
          delay(1000/2);
          digitalWrite(ThrowPin,HIGH);
          delay(1000);
-         digitalWrite(ThrowPin,LOW);
-         
+         digitalWrite(ThrowPin,LOW);       
          }
    }
    //delay(1000);
