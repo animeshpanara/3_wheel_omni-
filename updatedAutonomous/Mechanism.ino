@@ -10,7 +10,8 @@ void initnewMech(void)
 int newMech(){
   long int timerIr=0;
   int TempIr=0;
-  analogWrite(PWMpin,70);
+  analogWrite(PWMpin,60);
+  delay(1500);
   while(digitalRead(LimitRpin)==HIGH){
   digitalWrite(Motordir1pin,LOW);
   digitalWrite(Motordir2pin,HIGH);   
@@ -41,8 +42,10 @@ int newMech(){
       TempIr++;
     else
       TempIr=0;
-    if(TempIr>100)
-      return 1;  
+    if(TempIr>100){
+      Serial.println("::Throw again::");
+      return 1;
+    }  
   }
 }
 

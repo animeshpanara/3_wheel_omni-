@@ -7,14 +7,17 @@ void ThrowShuttleCock(int pos){
    delay(1000);
    digitalWrite(ThrowPin,LOW);
    if(pos==5){
-     if(newMech()==1){
+      int throwagain=newMech();
+     if(throwagain==1){
+         Serial.println("I am here");
          digitalWrite(ThrowLed,HIGH);
          delay(1000);
          digitalWrite(ThrowLed,LOW);
          delay(1000/2);
          digitalWrite(ThrowPin,HIGH);
          delay(1000);
-         digitalWrite(ThrowPin,LOW);       
+         digitalWrite(ThrowPin,LOW);
+         
          }
    }
    //delay(1000);
@@ -75,10 +78,10 @@ void NextThrowCycle(int posx){
       DACcounter=600;
       }
     else if(pos[1]==4){
-      DACcounter=9100;
+      DACcounter=875;
       }
     else if(pos[1]==5){
-      DACcounter=1135;
+      DACcounter=1170;
       }
    dac.setVoltage(DACcounter, false);  
    posindex=0;

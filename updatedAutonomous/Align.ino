@@ -57,7 +57,7 @@ bool alignBot(int x,float Tolerance){
     
    theta = (theta +LSAArray[Yaxis]->Theta)%360;
    calcRPM(-alignOmegaControl,theta,speed3*alignrpm,pwheel);   
-   if(abs(GetLSAReading(LSAArray[f]->OePin))<Tolerance && abs(GetLSAReading(LSAArray[l]->OePin))<Tolerance && abs(GetLSAReading(LSAArray[r]->OePin))<(Tolerance+5) && abs(GetLSAReading(LSAArray[l]->OePin))<(Tolerance+5))
+   if(abs(GetLSAReading(LSAArray[f]->OePin))<Tolerance && abs(GetLSAReading(LSAArray[b]->OePin))<Tolerance && abs(GetLSAReading(LSAArray[r]->OePin))<(Tolerance+5) && abs(GetLSAReading(LSAArray[l]->OePin))<(Tolerance+5))
      alignCounter++;
    else
      alignCounter = 0;

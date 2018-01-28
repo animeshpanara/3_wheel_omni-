@@ -199,17 +199,20 @@ void setup() {
     while(abs(GetLSAReading(LSAArray[r]->OePin))>25){
       Serial.println("Setup0");
       calcRPM(0,LSAArray[f]->Theta,rpmmax/3,pwheel);
-      TransmitRPM(pwheel);            
+      TransmitRPM(pwheel);
+      delay(100);            
     }
     while(abs(GetLSAReading(LSAArray[r]->OePin))<200){
       Serial.println("Setup1");
       calcRPM(0,LSAArray[f]->Theta,rpmmax/3,pwheel);
-      TransmitRPM(pwheel);             
+      TransmitRPM(pwheel);
+      delay(100);             
     }
     while(abs(GetLSAReading(LSAArray[r]->OePin))>25){
       Serial.println("Setup2");
       calcRPM(0,LSAArray[f]->Theta,rpmmax/3,pwheel);
-      TransmitRPM(pwheel);            
+      TransmitRPM(pwheel);
+      delay(100);            
     }
 //  Timer1.initialize(500000);
 //  Timer1.attachInterrupt(TimerHandler);
@@ -226,7 +229,7 @@ int checkbacksensor=1;
 //}
 long int junctimer=0;
 void loop(){
-  
+    if(Serial.available()>0)if(Serial.read()=='a')(ThrowShuttleCock(5));
     transmit = false;
     //Serial.println("forward:"+String(GetLSAReading(LSAArray[l]->OePin))+String(digitalRead(LSAArray[l]->JunctionPin)));//+"right:"+String(GetLSAReading(LSAArray[r]->OePin))+String(LSAArray[r]->JunctionPin)+"left:"+String(GetLSAReading(LSAArray[l]->OePin))+String(LSAArray[l]->JunctionPin)+"forward:"+String(GetLSAReading(LSAArray[b]->OePin))+String(LSAArray[b]->JunctionPin));
     if(ActiveLineSensor==4)Stopflag=1;      
