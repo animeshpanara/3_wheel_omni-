@@ -47,15 +47,16 @@ int CheckBall(){
 }
 void LoadBot(){
    int LoadPos;
-   if(pos[1]==3)
+   if(pos[1]==3 || pos[1]==0)
        LoadPos=1;
    else if(pos[1]==5){
-       LoadPos=1;
+       LoadPos=2;
        //DACcounter=0;
        //dac.setVoltage(DACcounter,false);         
    }    
    else
        LoadPos=2;
+       
    pos[0]=pos[1];
    pos[1]=LoadPos;
    posindex=0;
@@ -67,8 +68,9 @@ void LoadBot(){
    
    LoadFlag=1;
    alignedFlag=0;
-   cyclecomplete=1;
    Rotateflag=-1;
+   cyclecomplete=1;
+   ToleranceOfAlignment=6;
 }
 
 void NextThrowCycle(int posx){ 
@@ -76,7 +78,7 @@ void NextThrowCycle(int posx){
     pos[0]=pos[1];
     pos[1]=posx;
     if(pos[1]==3){
-      DACcounter=600;
+      DACcounter=660;
       }
     else if(pos[1]==4){
       DACcounter=950;
@@ -94,13 +96,13 @@ void NextThrowCycle(int posx){
    ActiveLineSensor=dir;
    ActiveOmegaSensor=rdir;
    
-   alignedFlag=0;
-   Dirchange=0;
-   Rotateflag=0;
-   ToleranceOfAlignment=10;
    LoadFlag=0;
-   alignCounter=0;
+   alignedFlag=0;
+   Rotateflag=0;
    cyclecomplete=0;
+   ToleranceOfAlignment=10;
+   //Dirchange=0;
+   //alignCounter=0;
    //Throwcomplete=0;
 }
 

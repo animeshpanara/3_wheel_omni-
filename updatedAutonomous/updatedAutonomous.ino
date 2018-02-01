@@ -111,23 +111,27 @@ int timerStart = 1;
 long int alignTime;
 int alignCounter=0; 
 int alignCounter1=0;
-int Stopflag = 1;
+int Stopflag = 0;
 bool transmit;
 enum activeLSA dir,rdir, pdir, rpdir;
 int posindex=0;
 int ActiveLineSensor, ActiveOmegaSensor, PerpendicularLineSensor;
 float Linecontrol=0, Omegacontrol=0; 
 
+bool LoadFlag=0;
 int alignedFlag=0;
+int Rotateflag=-1;
+int cyclecomplete=1;
+
+bool Throwcomplete=1;
+
 bool Dirchange=0;
 float ToleranceOfAlignment=8;
 
-int Rotateflag=-1;
-bool Throwcomplete=1;
-int cyclecomplete=1;
-bool LoadFlag=0;
+
 int pos[2];
 int Ircounter=0;
+
 //int ThrowLocation=3;
 
 /**********************************************************************************************************************************/
@@ -154,6 +158,7 @@ void setup() {
   TransmitRPM(pwheel);
   interrupts();
   
+  Stopflag=0;
   delay(1000);
   
   initLSA(9600,LSAArray[0]->OePin);            //const int minControl = -255;      const int maxControl = 255;
@@ -191,16 +196,16 @@ void setup() {
   clearJunction(LSAArray[2]->Address);
   clearJunction(LSAArray[3]->Address);
 
-  pos[0]=0;
-  pos[1]=1;
+  posindex=0; 
   
-  dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex]; 
-  rdir = (enum activeLSA)abs((int)dir-3);
-  pdir = (enum activeLSA)(((int)dir+2)%4);   
-  Stopflag=0;
-  ActiveLineSensor=dir;
-  ActiveOmegaSensor=rdir;
-  PerpendicularLineSensor= pdir;
+//  pos[0]=0;
+//  pos[1]=3;
+//  dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex]; 
+//  rdir = (enum activeLSA)abs((int)dir-3);
+//  pdir = (enum activeLSA)(((int)dir+2)%4);   
+//  ActiveLineSensor=dir;
+//  ActiveOmegaSensor=rdir;
+//  PerpendicularLineSensor= pdir;
   maxcolor=3;
   
   if(REDBOXSetup){
@@ -225,7 +230,9 @@ void setup() {
   } 
       // wdt_enable(WDTO_1S);
  Serial.println("Starting code!");
-  
+ pos[0]=0;
+ pos[1]=0;
+ LoadBot(); 
 }
       
 void loop(){
