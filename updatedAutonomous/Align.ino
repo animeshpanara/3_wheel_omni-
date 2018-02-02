@@ -93,12 +93,14 @@ bool RotateBot(bool dir,int Tolerance)
 {
   Serial.print("Entering");
   while((abs(GetLSAReading(LSAArray[f]->OePin))<220)){
+    
     Serial.println('a');
     if(dir)
       calcRPM(100,0,0,pwheel);              
     else
       calcRPM(-100,0,0,pwheel);              
     TransmitRPM(pwheel);
+    delay(100);
    }
    if(dir)
     LSArotateprev= -40;
@@ -145,6 +147,7 @@ bool RotateBot(bool dir,int Tolerance)
       float AlignControlPerpendicular=LineControl(LSAArray[Xaxis]->OePin,maxBounds,35,pAligngainperp);
       float AlignControlActive1=LineControl(LSAArray[Yaxis1]->OePin,maxBounds,35,pAligngain1);
       float AlignControlPerpendicular1=LineControl(LSAArray[Xaxis1]->OePin,maxBounds,35,pAligngainperp1);
+      delay(100);
    }
      
    calcRPM(0,0,0,pwheel);

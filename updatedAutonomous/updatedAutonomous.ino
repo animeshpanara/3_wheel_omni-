@@ -1,6 +1,6 @@
 #include <WSWire.h>
 //#include <Wire.h>
-#define REDBOXSetup 0
+#define REDBOXSetup 1
 #define ToRad(x) ((x)*0.01745329252)  // *pi/180
 #define ToDeg(x) ((x)*57.2957795131)  // *180/pi
 #include <Adafruit_MCP4725.h>
@@ -86,7 +86,7 @@ const float pi = 3.1415;
 const int anglea = 90;
 const int angleb = 210;
 const int anglec = 330;
-const int RPMMAX = 350;
+const int RPMMAX = 400;
 const int alignrpm=210;
 const int TriggerPin=9;
 const int EchoPin=8;
