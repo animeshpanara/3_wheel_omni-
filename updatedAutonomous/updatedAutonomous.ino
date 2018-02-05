@@ -5,6 +5,9 @@
 #define ToDeg(x) ((x)*57.2957795131)  // *180/pi
 #include <Adafruit_MCP4725.h>
 #define PiSerial Serial3
+const int dacTZ3=1000;
+const int dacTZ2=780;
+const int dacTZ1=585;
 
 Adafruit_MCP4725 dac;
 uint32_t DACcounter;
@@ -166,17 +169,17 @@ void setup() {
   initLSA(9600,LSAArray[2]->OePin);
   initLSA(9600,LSAArray[3]->OePin);
   
-  PIDinit(0.5,0.071,0,0,-255,255,pLinegain[0]);
+  PIDinit(0.3,0.0,0,0,-255,255,pLinegain[0]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[1]);
   PIDinit(0.7,2.0,0,0,-255,255,pLinegain[2]);
-  PIDinit(0.5,0.0,0,0,-255,255,pLinegain[3]);
+  PIDinit(0.4,0.0,0,0,-255,255,pLinegain[3]);
   PIDinit(0.8,0.0,0,0,-rpmmax,rpmmax,pAlignOmegagain);//Kp=0.67,Kd=0.7,Ki=0
   PIDinit(0.8,0.5,0,0,-rpmmax,rpmmax,pOmegagain);//Kp=0.67,Kd=0.7,Ki=0
   PIDinit(0.6,0.6,0.01,0,-35,35,pAligngain);
   PIDinit(0.9,1.1,0.02,0,-35,35,pAligngainperp);
   PIDinit(0.9,1.1,0.02,0,-35,35,pAligngain1);
   PIDinit(0.6,0.6,0.01,0,-35,35,pAligngainperp1);
-  PIDinit(3,30,0,0,-120,120,pRotategain);
+  PIDinit(3,25,0,0,-120,120,pRotategain);
 
   pinMode(LSAArray[0]->JunctionPin,INPUT);
   pinMode(LSAArray[1]->JunctionPin,INPUT);
@@ -268,16 +271,17 @@ void loop(){
            if(!(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
            Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
            }
-          Serial.println("LineControl:"+String(Linecontrol)+"OmegaControl:"+String(Omegacontrol)+"  "+String(posindex));
+          //Serial.println("LineControl:"+String(Linecontrol)+"OmegaControl:"+String(Omegacontrol)+"  "+String(posindex));
           if(arr[pos[0]][pos[1]][posindex]==4 && alignedFlag==0){
-                if(abs(GetLSAReading(LSAArray[PerpendicularLineSensor]->OePin))<15){
+                if(abs(GetLSAReading(LSAArray[PerpendicularLineSensor]->OePin))<16){
                    for(int k =0;k<3;k++){
                      pwheel[k]->rpm=0;
                    }
-                     alignedFlag=1; 
+                   TransmitRPM(pwheel);              
+                   alignedFlag=1; 
                 }
                 else{
-                    calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3,pwheel);
+                    calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3.2,pwheel);
                 }
           }
         else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==1){                                                                                        //set align flag 0 before AND afterrotate 1 
@@ -325,6 +329,7 @@ void loop(){
                           chechIr();
                           //delay(1000);
                           int location;
+                          if(maxcolor>3)
                           while(1){
                             location=CheckBall();
                             if (location!=0)

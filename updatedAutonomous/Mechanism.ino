@@ -10,7 +10,7 @@ void initnewMech(void)
 int newMech(){
   long int timerIr=0;
   int TempIr=0;
-  analogWrite(PWMpin,75);
+  analogWrite(PWMpin,115);
   delay(1500);
   while(digitalRead(LimitRpin)==HIGH){
   digitalWrite(Motordir1pin,LOW);
@@ -27,7 +27,7 @@ int newMech(){
   delay(500);
   digitalWrite(reloadLiftpin,HIGH);
   delay(100);
-  analogWrite(PWMpin,90);
+  analogWrite(PWMpin,100);
   
   while(digitalRead(LimitRpin)==HIGH){
   digitalWrite(Motordir1pin,LOW);

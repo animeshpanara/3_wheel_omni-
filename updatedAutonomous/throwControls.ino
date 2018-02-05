@@ -4,7 +4,7 @@ void ThrowShuttleCock(int pos){
    digitalWrite(ThrowPin,HIGH);
    delay(1000);
    digitalWrite(ThrowPin,LOW);
-   delay(1000/2);
+   //delay(1000/2);
    digitalWrite(ThrowLed,LOW);
    if(pos==5){
       int throwagain=newMech();
@@ -78,13 +78,13 @@ void NextThrowCycle(int posx){
     pos[0]=pos[1];
     pos[1]=posx;
     if(pos[1]==3){
-      DACcounter=660;
+      DACcounter=dacTZ1;
       }
     else if(pos[1]==4){
-      DACcounter=950;
+      DACcounter=dacTZ2;
       }
     else if(pos[1]==5){
-      DACcounter=1220;
+      DACcounter=dacTZ3;
       }
    dac.setVoltage(DACcounter, false);  
    
