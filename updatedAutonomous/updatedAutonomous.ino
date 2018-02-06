@@ -6,8 +6,9 @@
 #include <Adafruit_MCP4725.h>
 #define PiSerial Serial3
 const int dacTZ3=1000;
-const int dacTZ2=780;
-const int dacTZ1=585;
+const int dacTZ2=750;
+const int dacTZ1=600;
+const int rotateRPM=120;
 
 Adafruit_MCP4725 dac;
 uint32_t DACcounter;
@@ -179,7 +180,7 @@ void setup() {
   PIDinit(0.9,1.1,0.02,0,-35,35,pAligngainperp);
   PIDinit(0.9,1.1,0.02,0,-35,35,pAligngain1);
   PIDinit(0.6,0.6,0.01,0,-35,35,pAligngainperp1);
-  PIDinit(3,25,0,0,-120,120,pRotategain);
+  PIDinit(2.5,10,0,0,-rotateRPM,rotateRPM,pRotategain);
 
   pinMode(LSAArray[0]->JunctionPin,INPUT);
   pinMode(LSAArray[1]->JunctionPin,INPUT);
@@ -236,9 +237,10 @@ void setup() {
  pos[0]=0;
  pos[1]=0;
  LoadBot(); 
-}
+ }
       
 void loop(){
+
     if(Serial.available()>0)if(Serial.read()=='a')(ThrowShuttleCock(5));
     transmit = false;
     //Serial.println("forward:"+String(GetLSAReading(LSAArray[l]->OePin))+String(digitalRead(LSAArray[l]->JunctionPin)));//+"right:"+String(GetLSAReading(LSAArray[r]->OePin))+String(LSAArray[r]->JunctionPin)+"left:"+String(GetLSAReading(LSAArray[l]->OePin))+String(LSAArray[l]->JunctionPin)+"forward:"+String(GetLSAReading(LSAArray[b]->OePin))+String(LSAArray[b]->JunctionPin));
@@ -248,7 +250,7 @@ void loop(){
           {
             junctimer=millis();
             while(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin))if(millis()-junctimer>2000)break;
-            //LSAArray[ActiveLineSensor]->JunctionCount=getJunction(LSAArray[ActiveLineSensor]->Address); //Why not in interrupt????
+            LSAArray[ActiveLineSensor]->JunctionCount=getJunction(LSAArray[ActiveLineSensor]->Address); //Why not in interrupt????
             posindex++;
             dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex];
             rdir =(enum activeLSA)abs(dir-3);
@@ -271,7 +273,7 @@ void loop(){
            if(!(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin)||(digitalRead(LSAArray[ActiveOmegaSensor]->JunctionPin))))
            Omegacontrol=OmegaControl(LSAArray[ActiveLineSensor]->OePin,LSAArray[ActiveOmegaSensor]->OePin,40,pOmegagain);
            }
-          //Serial.println("LineControl:"+String(Linecontrol)+"OmegaControl:"+String(Omegacontrol)+"  "+String(posindex));
+          Serial.println("LineControl:"+String(Linecontrol)+"OmegaControl:"+String(Omegacontrol)+"  "+String(posindex));
           if(arr[pos[0]][pos[1]][posindex]==4 && alignedFlag==0){
                 if(abs(GetLSAReading(LSAArray[PerpendicularLineSensor]->OePin))<16){
                    for(int k =0;k<3;k++){
@@ -281,17 +283,17 @@ void loop(){
                    alignedFlag=1; 
                 }
                 else{
-                    calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3.2,pwheel);
+                    calcRPM(-Omegacontrol,LSAArray[ActiveLineSensor]->Theta-Linecontrol,rpmmax/3.5,pwheel);
                 }
           }
         else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==1){                                                                                        //set align flag 0 before AND afterrotate 1 
-          RotateBot(1,5);
+          RotateBot(1,6);
           ToleranceOfAlignment=6;
           Rotateflag=-2;
           //alignedFlag=1;
         }
         else if(arr[pos[0]][pos[1]][posindex]==4 && Rotateflag==2){                                                                                       //set align flag 0 before AND afterrotate 1 
-          RotateBot(0,5);
+          RotateBot(0,6);
           ToleranceOfAlignment=5 ;
           Rotateflag=-1;
           //alignedFlag=1;
@@ -329,7 +331,7 @@ void loop(){
                           chechIr();
                           //delay(1000);
                           int location;
-                          if(maxcolor>3)
+                          
                           while(1){
                             location=CheckBall();
                             if (location!=0)
@@ -343,6 +345,7 @@ void loop(){
                           else{
                           NextThrowCycle(maxcolor);
                           }
+                          
                           maxcolor++;
                           if(maxcolor>5)maxcolor=5;
                           //delay(1000);
@@ -379,14 +382,14 @@ void loop(){
       }
     }
     for(int l =0;l<3;l++){
-//      //Serial.println("Wheel"+String(l)+": "+pwheel[l]->rpm);
+      //Serial.println("Wheel"+String(l)+": "+pwheel[l]->rpm);
       if(pwheel[l]->rpm>RPMMAX)Stopflag=1;
       break;
       //if(pwheel[l]->prev_rpm!=pwheel[l]->rpm)
       //transmit = true;
     }
-//    
-//    if(true)
+    
+  //    if(true)
       TransmitRPM(pwheel);
     //delay(20);  
    //   wdt_reset();
