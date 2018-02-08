@@ -1,34 +1,59 @@
-void ThrowShuttleCock(int pos){
-   digitalWrite(ThrowLed,HIGH);
-   delay(1000);
-   digitalWrite(ThrowPin,HIGH);
-   delay(1000);
-   digitalWrite(ThrowPin,LOW);
-   //delay(1000/2);
-   digitalWrite(ThrowLed,LOW);
-   if(pos==5){
-      int throwagain=newMech();
-     if(throwagain==1){
-         Serial.println("I am here");
-         digitalWrite(ThrowLed,HIGH);
-         delay(1000);
-         digitalWrite(ThrowPin,HIGH);
-         delay(1000);
-         digitalWrite(ThrowPin,LOW);
-         delay(1000/2);
-         digitalWrite(ThrowLed,LOW);
-         }
+void  ThrowShuttleCock(int pos){
+   if(TimedchechIr(20,2.5)){
+       digitalWrite(ThrowLed,HIGH);
+       delay(1000);
+       digitalWrite(ThrowPin,HIGH);
+       delay(1000);
+       digitalWrite(ThrowPin,LOW);
+       //delay(1000/2);
+       digitalWrite(ThrowLed,LOW);
+       if(pos==5){
+          int throwagain=newMech();
+         if(throwagain==1){
+             Serial.println("I am here");
+             digitalWrite(ThrowLed,HIGH);
+             delay(1000);
+             digitalWrite(ThrowPin,HIGH);
+             delay(1000);
+             digitalWrite(ThrowPin,LOW);
+             delay(1000/2);
+             digitalWrite(ThrowLed,LOW);
+             }
+       }
    }
    //delay(1000);
 }
-void chechIr(){
+bool TimedchechIr(int cntr,float TimeInSec){
+  long int timerIr=0;
+  timerIr=millis();
+  while(1){
+    if(!digitalRead(TriggerPin))
+      Ircounter++;
+    else
+      Ircounter=0;
+    //Serial.println("IRCounter:"+String(Ircounter));  
+    if(millis()-timerIr>TimeInSec*1000)
+    {
+      Ircounter=0;
+      return 0;
+      //break;
+    }
+    if(Ircounter>cntr)
+    {
+      Ircounter=0;
+      return 1;
+      //break;
+    }
+  }
+}
+void chechIr(int cntr){
   while(1){
     if(!digitalRead(TriggerPin))
       Ircounter++;
     else
       Ircounter=0;
     Serial.println("IRCounter:"+String(Ircounter));  
-    if(Ircounter>50)
+    if(Ircounter>cntr)
     {
       Ircounter=0;
       break;

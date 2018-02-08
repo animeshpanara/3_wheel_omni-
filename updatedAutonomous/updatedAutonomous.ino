@@ -5,7 +5,7 @@
 #define ToDeg(x) ((x)*57.2957795131)  // *180/pi
 #include <Adafruit_MCP4725.h>
 #define PiSerial Serial3
-const int dacTZ3=1000;
+const int dacTZ3=865;//1000
 const int dacTZ2=750;
 const int dacTZ1=600;
 const int rotateRPM=120;
@@ -328,7 +328,7 @@ void loop(){
                     {
                           //commented out throw complete flag everywhere its redundant
                           digitalWrite(CamLed,HIGH);
-                          chechIr();
+                          chechIr(50);
                           //delay(1000);
                           int location;
                           
