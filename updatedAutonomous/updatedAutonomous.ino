@@ -1,6 +1,6 @@
 #include <WSWire.h>
 //#include <Wire.h>
-#define REDBOXSetup 1
+#define REDBOXSetup 0
 #define ToRad(x) ((x)*0.01745329252)  // *pi/180
 #define ToDeg(x) ((x)*57.2957795131)  // *180/pi
 #include <Adafruit_MCP4725.h>
@@ -135,7 +135,7 @@ float ToleranceOfAlignment=8;
 
 int pos[2];
 int Ircounter=0;
-
+int CheckIrflag=0;
 //int ThrowLocation=3;
 
 /**********************************************************************************************************************************/
@@ -240,7 +240,6 @@ void setup() {
  }
       
 void loop(){
-
     if(Serial.available()>0)if(Serial.read()=='a')(ThrowShuttleCock(5));
     transmit = false;
     //Serial.println("forward:"+String(GetLSAReading(LSAArray[l]->OePin))+String(digitalRead(LSAArray[l]->JunctionPin)));//+"right:"+String(GetLSAReading(LSAArray[r]->OePin))+String(LSAArray[r]->JunctionPin)+"left:"+String(GetLSAReading(LSAArray[l]->OePin))+String(LSAArray[l]->JunctionPin)+"forward:"+String(GetLSAReading(LSAArray[b]->OePin))+String(LSAArray[b]->JunctionPin));
@@ -252,10 +251,11 @@ void loop(){
             while(digitalRead(LSAArray[ActiveLineSensor]->JunctionPin))if(millis()-junctimer>2000)break;
             LSAArray[ActiveLineSensor]->JunctionCount=getJunction(LSAArray[ActiveLineSensor]->Address); //Why not in interrupt????
             posindex++;
+            
             dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex];
             rdir =(enum activeLSA)abs(dir-3);
             pdir =(enum activeLSA)(((int)dir+2)%4); //f,r,l,b  f=l r=b      
-            
+                        
             if((int)dir!=4){
               if(dir==ActiveLineSensor){
                   ActiveLineSensor = dir;
@@ -388,11 +388,25 @@ void loop(){
       //if(pwheel[l]->prev_rpm!=pwheel[l]->rpm)
       //transmit = true;
     }
+    if(CheckIrflag){
+      if(!digitalRead(TriggerPin))
+        Ircounter++;
+      if(Ircounter>20){
+        Ircounter=0;
+        CheckIrflag=0;
+        }
+      else
+        if(posindex==1){
+        Ircounter=0;
+        CheckIrflag=0;
+        ReLoadBot();     
+        }
+    }
     
-  //    if(true)
-      TransmitRPM(pwheel);
-    //delay(20);  
-   //   wdt_reset();
+      //    if(true)
+    TransmitRPM(pwheel);
+      //delay(20);  
+    //   wdt_reset();
 } 
 
 

@@ -126,8 +126,40 @@ void NextThrowCycle(int posx){
    Rotateflag=0;
    cyclecomplete=0;
    ToleranceOfAlignment=10;
+   CheckIrflag=1;
    //Dirchange=0;
    //alignCounter=0;
    //Throwcomplete=0;
+}
+void ReLoadBot(){
+   int LoadPos,temp=0;
+   
+   if(pos[0]==1&&pos[1]==3)
+   temp=1;
+   if(pos[0]==1&&pos[1]==4)
+   temp=2;
+   if(pos[0]==2&&pos[1]==4)
+   temp=1;
+   if(pos[0]==2&&pos[1]==5)
+   temp=4;
+   if(pos[0]==1&&pos[1]==5)
+   temp=5;
+   
+   LoadPos=pos[0];    
+   pos[0]=pos[1];
+   pos[1]=LoadPos;
+   posindex=temp;
+   dir = (enum activeLSA)arr[pos[0]][pos[1]][posindex]; 
+   rdir = (enum activeLSA)abs((int)dir-3);
+   pdir = (enum activeLSA)(((int)dir+2)%4);   
+   ActiveLineSensor=dir;
+   ActiveOmegaSensor=rdir;
+   
+   LoadFlag=1;
+   alignedFlag=0;
+   Rotateflag=-1;
+   cyclecomplete=1;
+   ToleranceOfAlignment=6;
+   CheckIrflag=0;
 }
 
