@@ -406,7 +406,7 @@ void loop(){
       //    if(true)
     TransmitRPM(pwheel);
       //delay(20);  
-    //   wdt_reset();
+      //   wdt_reset();
 } 
 
 
