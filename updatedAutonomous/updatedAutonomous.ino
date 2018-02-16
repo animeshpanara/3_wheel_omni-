@@ -1,11 +1,11 @@
 #include <WSWire.h>
 //#include <Wire.h>
-#define REDBOXSetup 0
+#define REDBOXSetup 1
 #define ToRad(x) ((x)*0.01745329252)  // *pi/180
 #define ToDeg(x) ((x)*57.2957795131)  // *180/pi
 #include <Adafruit_MCP4725.h>
 #define PiSerial Serial3
-const int dacTZ3=865;//1000
+const int dacTZ3=1020;//1000
 const int dacTZ2=750;
 const int dacTZ1=600;
 const int rotateRPM=120;
