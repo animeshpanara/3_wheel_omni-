@@ -7,6 +7,7 @@ void  ThrowShuttleCock(int pos){
        digitalWrite(ThrowPin,LOW);
        //delay(1000/2);
        digitalWrite(ThrowLed,LOW);
+   }
        if(pos==5){
           int throwagain=newMech();
          if(throwagain==1){
@@ -20,7 +21,7 @@ void  ThrowShuttleCock(int pos){
              digitalWrite(ThrowLed,LOW);
              }
        }
-   }
+   
    //delay(1000);
 }
 bool TimedchechIr(int cntr,float TimeInSec){
