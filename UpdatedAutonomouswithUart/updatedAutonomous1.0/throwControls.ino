@@ -104,7 +104,7 @@ void LoadBot(){
 
 void NextThrowCycle(int posx){
     pwmfact=1.2;
-    pwmfact1=5; 
+    pwmfact1=4; 
     int LoadPos=2;
     pos[0]=pos[1];
     pos[1]=posx;

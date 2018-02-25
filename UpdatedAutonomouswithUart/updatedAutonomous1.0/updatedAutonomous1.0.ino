@@ -141,9 +141,10 @@ bool transmit;
 enum activeLSA dir,rdir, pdir, rpdir;
 int posindex=0;
 int ActiveLineSensor, ActiveOmegaSensor, PerpendicularLineSensor;
-float Linecontrol=0, Omegacontrol=0; 
+float Linecontrol=0, Omegacontrol=0;
+
 float pwmfact=1.2;
-float pwmfact1=3.6;
+float pwmfact1=3;
 
 bool LoadFlag=0;
 int alignedFlag=0;
