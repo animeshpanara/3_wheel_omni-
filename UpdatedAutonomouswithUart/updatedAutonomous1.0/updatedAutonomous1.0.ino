@@ -5,7 +5,7 @@
 #define ToRad(x) ((x)*0.01745329252)  // *pi/180
 #define ToDeg(x) ((x)*57.2957795131)  // *180/pi
 #include <Adafruit_MCP4725.h>
-#define PiSerial Serial3
+#define PiSerial Serial1
 
 const int dacTZ3=940;//1000
 const int dacTZ2=690;
@@ -47,7 +47,7 @@ float LSAbackwardprev;
 int LSArotateprev;
 
 //LSA LSAf={0x01,270,51,0,53},LSAr={0x02,180,47,0,49},LSAl={0x03,0,41,0,43}, LSAb={0x04,90,37,0,39},*LSAArray[4]={&LSAf,&LSAr,&LSAl,&LSAb};
-LSA LSAf={0x01,270,19,0,31},LSAr={0x02,180,2,0,27},LSAl={0x03,0,18,0,29}, LSAb={0x04,90,3,0,25},*LSAArray[4]={&LSAf,&LSAr,&LSAl,&LSAb};
+LSA LSAf={0x01,270,23,0,31},LSAr={0x02,180,2,0,27},LSAl={0x03,0,35,0,29}, LSAb={0x04,90,3,0,25},*LSAArray[4]={&LSAf,&LSAr,&LSAl,&LSAb};
 
 int ActiveSensor=0;
 enum activeLSA {f,r,l,b,s};
@@ -171,9 +171,9 @@ wheel *pwheel[3]={&wheela,&wheelb,&wheelc};
 
 void setup() {
   //wdt_disable();
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial2.begin(9600);
-  //PiSerial.begin(115200);
+  PiSerial.begin(115200);
   #ifdef UARTCOMM
   UsartSerial.begin(115200);
   ET.begin(details(mydata), &UsartSerial);
