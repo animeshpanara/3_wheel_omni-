@@ -133,11 +133,11 @@ void setup() {
 
 
 void loop() {
-  
+  getUData();
 }
 
 void Timerhandler() {
-  getUData();
+  
   if (flag == 1) {
     Serial.println("A:"+String(pMotorgain[0]->required)+"B:"+String(pMotorgain[1]->required)+"C:"+String(pMotorgain[2]->required));
     encoderA->Rpm = ((encoderA->Count - encoderA->previousCount) * 60.0) / (Time * GearRatio * encoderA->Ppr);

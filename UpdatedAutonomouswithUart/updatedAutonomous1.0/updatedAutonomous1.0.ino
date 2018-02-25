@@ -15,7 +15,7 @@ const int rotateRPM=120;
 Adafruit_MCP4725 dac;
 uint32_t DACcounter;
 
-//#define UARTCOMM
+#define UARTCOMM
 
 #ifdef UARTCOMM
 #define UsartSerial Serial3
@@ -175,8 +175,10 @@ void setup() {
   Serial2.begin(9600);
   //PiSerial.begin(115200);
   #ifdef UARTCOMM
-  UsartSerial.begin(38400);
+  UsartSerial.begin(115200);
   ET.begin(details(mydata), &UsartSerial);
+  #else
+  PiSerial.begin(115200);
   #endif
   Wire.begin();
   initIrSensor();

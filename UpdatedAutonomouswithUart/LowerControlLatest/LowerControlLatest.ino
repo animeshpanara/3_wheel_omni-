@@ -127,10 +127,11 @@ void setup() {
 
 
 void loop() {
+  //getUData();
 }
 
 void Timerhandler() {
-  //getUData();
+  
   if (flag == 1) {
     encoderA->Rpm = ((encoderA->Count - encoderA->previousCount) * 60.0) / (Time * GearRatio * encoderA->Ppr);
     encoderB->Rpm = ((encoderB->Count - encoderB->previousCount) * 60.0) / (Time * GearRatio * encoderB->Ppr); //Why do we need previous count....
