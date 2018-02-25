@@ -62,7 +62,6 @@ void chechIr(int cntr){
   }
 }
 int CheckBall(){
-  PiSerial.flush();
   PiSerial.write('a');
   while(PiSerial.available()<=0);
   char x=PiSerial.read();

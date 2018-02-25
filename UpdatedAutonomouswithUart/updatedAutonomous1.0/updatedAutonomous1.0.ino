@@ -8,7 +8,7 @@
 #define PiSerial Serial1
 
 const int dacTZ3=940;//1000
-const int dacTZ2=690;
+const int dacTZ2=720;
 const int dacTZ1=570;
 const int rotateRPM=120;
 
@@ -110,7 +110,8 @@ const int anglea = 90;
 const int angleb = 210;
 const int anglec = 330;
 const int RPMMAX = 400;
-const int alignrpm=210;
+//const int alignrpm=210;
+const int alignrpm=240;
 const int TriggerPin=9;
 const int EchoPin=8;
 const int ThrowLed=47; 
@@ -126,7 +127,7 @@ const int PWMpin=12;
 const int LimitLpin=7;
 const int LimitRpin=5; 
 const int reloadLiftpin=53;
-const int MechanismRPM=90;
+const int MechanismRPM=100;
 /**********************************************************************************************************************************/
 int maxcolor=0;
 /**********************************************************************************************************************************/
@@ -142,7 +143,7 @@ int posindex=0;
 int ActiveLineSensor, ActiveOmegaSensor, PerpendicularLineSensor;
 float Linecontrol=0, Omegacontrol=0; 
 float pwmfact=1.2;
-float pwmfact1=4;
+float pwmfact1=3.6;
 
 bool LoadFlag=0;
 int alignedFlag=0;
