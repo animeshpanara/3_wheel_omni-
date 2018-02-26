@@ -7,6 +7,8 @@
 #define MaxPwm 255
 #define GearRatio 0.89
 #define desiredpwm(x) (x*255.0)/320.0
+#define UartSerial Serial2
+#define UartBaud 115200
 //#define PWM_FREQ1 2500
 
 //DuePWM pwm(PWM_FREQ1, 3000);
@@ -97,8 +99,8 @@ float Output[3];
 void setup() {
   initEncoders();
   Serial.begin(9600);
-  Serial2.begin(115200);
-  ET.begin(details(mydata), &Serial2);
+  UartSerial.begin(UartBaud);
+  ET.begin(details(mydata), &UartSerial);
   Timer1.attachInterrupt(Timerhandler);
   Timer1.start(1000000 * Time);
   Wire.begin(8);
@@ -139,7 +141,7 @@ void loop() {
 void Timerhandler() {
   
   if (flag == 1) {
-    Serial.println("A:"+String(pMotorgain[0]->required)+"B:"+String(pMotorgain[1]->required)+"C:"+String(pMotorgain[2]->required));
+    //Serial.println("A:"+String(pMotorgain[0]->required)+"B:"+String(pMotorgain[1]->required)+"C:"+String(pMotorgain[2]->required));
     encoderA->Rpm = ((encoderA->Count - encoderA->previousCount) * 60.0) / (Time * GearRatio * encoderA->Ppr);
     encoderB->Rpm = ((encoderB->Count - encoderB->previousCount) * 60.0) / (Time * GearRatio * encoderB->Ppr); //Why do we need previous count....
     encoderC->Rpm = ((encoderC->Count - encoderC->previousCount) * 60.0) / (Time * GearRatio * encoderC->Ppr);

@@ -9,7 +9,8 @@
 #define GearRatio 0.89
 #define desiredpwm(x) (x*255.0)/320.0
 #define PWM_FREQ1 2500
-
+#define UartSerial Serial2
+#define UartBaud 115200
 /**********************************************************************************/
 //create object
 EasyTransfer ET; 
@@ -91,8 +92,8 @@ float Output[3];
 void setup() {
   initEncoders();
   Serial.begin(9600);
-  //Serial2.begin(38400);
-  //ET.begin(details(mydata), &Serial2);
+  //UartSerial.begin(UartBaud);
+  //ET.begin(details(mydata), &UartSerial);
   Timer1.attachInterrupt(Timerhandler);
   Timer1.start(1000000 * Time);
   Wire.begin(8);
